@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KooL — Portail Commercial &amp; Analytics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --kool-navy: #131A29;
+      --kool-navy-light: #1D273B;
+      --kool-yellow: #FFD400;
+      --kool-yellow-hover: #E6BF00;
+      --kool-bg: #F4F5F7;
+    }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--kool-bg);
+      color: var(--kool-navy);
+    }
+    .bg-kool-navy { background-color: var(--kool-navy); }
+    .bg-kool-navy-light { background-color: var(--kool-navy-light); }
+    .bg-kool-yellow { background-color: var(--kool-yellow); }
+    .hover\:bg-kool-yellow-hover:hover { background-color: var(--kool-yellow-hover); }
+    .text-kool-navy { color: var(--kool-navy); }
+    .text-kool-yellow { color: var(--kool-yellow); }
+    .border-kool-yellow { border-color: var(--kool-yellow); }
+    .tab-active {
+      border-bottom: 3px solid var(--kool-yellow);
+      color: var(--kool-navy);
+      font-weight: 700;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #E2E8F0; }
+    ::-webkit-scrollbar-thumb { background: #94A3B8; border-radius: 9999px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- ===================================================================== -->
+  <!-- 1. ÉCRAN DE CONNEXION (DIRECTION & ACCOUNT MANAGERS)                  -->
+  <!-- ===================================================================== -->
+  <div id="loginScreen" class="min-h-screen flex items-center justify-center px-4 py-8" style="background: radial-gradient(circle at top left, #1F2A40 0%, #131A29 58%, #0A0E17 100%);">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-slate-200">
+      <div class="bg-kool-navy px-8 py-8 flex flex-col items-center text-center border-b-4 border-kool-yellow">
+        <!-- Logo SVG Officiel KooL -->
+        <svg class="h-14 w-auto mb-3" viewBox="0 0 210 72" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Logo KooL">
+          <path d="M14 10H30V31L48 10H67L45 34L69 62H49L30 39V62H14V10Z" fill="#FFFFFF"/>
+          <circle cx="88" cy="39" r="19" stroke="#FFFFFF" stroke-width="11"/>
+          <circle cx="88" cy="39" r="5" fill="#FFD400"/>
+          <circle cx="131" cy="39" r="19" stroke="#FFFFFF" stroke-width="11"/>
+          <circle cx="131" cy="39" r="5" fill="#FFD400"/>
+          <rect x="70" y="61" width="79" height="5" rx="2.5" fill="#FFD400"/>
+          <path d="M161 10H177V49H199V62H161V10Z" fill="#FFFFFF"/>
+        </svg>
+        <h1 class="text-white font-bold text-lg tracking-tight">Portail Commercial &amp; Analytics</h1>
+        <p class="text-xs font-medium text-kool-yellow uppercase tracking-wider mt-1">Octobre / Novembre KooL • Market VF &amp; Food VF</p>
+      </div>
+
+      <div class="p-8">
+        <form id="loginForm" class="space-y-4" autocomplete="off">
+          <div>
+            <label for="loginUser" class="block text-xs font-bold text-slate-700 mb-1">Identifiant (Login)</label>
+            <input id="loginUser" name="kool_user" type="text" required placeholder="Ex: proprio, admin, omar, khouloud..." autocomplete="username" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-500" />
+          </div>
+          <div>
+            <label for="loginPass" class="block text-xs font-bold text-slate-700 mb-1">Mot de passe</label>
+            <input id="loginPass" name="kool_pass" type="password" required placeholder="••••••••" autocomplete="current-password" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-500" />
+          </div>
+          <div id="loginError" class="hidden text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3.5 py-2.5 font-medium">
+            Identifiant ou mot de passe invalide.
+          </div>
+          <button type="submit" class="w-full bg-kool-yellow hover:bg-kool-yellow-hover text-kool-navy font-extrabold py-3 rounded-xl text-sm transition shadow-md cursor-pointer">
+            Se connecter et ouvrir les données
+          </button>
+        </form>
+
+        <div class="mt-6 pt-4 border-t border-slate-100">
+          <details class="text-xs text-slate-500 cursor-pointer">
+            <summary class="font-semibold text-slate-600 hover:text-kool-navy">Comptes d'accès (Direction &amp; AM)</summary>
+            <div class="mt-2 bg-slate-50 rounded-lg p-3 space-y-1 text-[11px] font-mono text-slate-700">
+              <div><span class="font-bold text-kool-navy">Direction :</span> proprio / Kool2026!</div>
+              <div><span class="font-bold text-kool-navy">Admin :</span> admin / Kool2026!</div>
+              <div><span class="font-bold text-sky-700">AM Omar :</span> omar / omar2026</div>
+              <div><span class="font-bold text-sky-700">AM Khouloud :</span> khouloud / khouloud2026</div>
+              <div><span class="font-bold text-sky-700">AM Aziza :</span> aziza / aziza2026</div>
+              <div><span class="font-bold text-sky-700">AM Nour :</span> nour / nour2026</div>
+              <div><span class="font-bold text-sky-700">AM Iheb :</span> iheb / iheb2026</div>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- 2. APPLICATION PRINCIPALE (OUVERTE AUTOMATIQUEMENT SUR OCT/NOV KOOL)  -->
+  <!-- ===================================================================== -->
+  <div id="appContainer" class="hidden flex-1 flex flex-col">
+
+    <!-- Header Officiel KooL -->
+    <header class="bg-kool-navy text-white shadow-lg border-b-4 border-kool-yellow sticky top-0 z-30">
+      <div class="max-w-[1440px] mx-auto px-4 sm:px-6 py-3 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3.5">
+            <svg class="h-9 w-auto shrink-0" viewBox="0 0 210 72" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Logo KooL">
+              <path d="M14 10H30V31L48 10H67L45 34L69 62H49L30 39V62H14V10Z" fill="#FFFFFF"/>
+              <circle cx="88" cy="39" r="19" stroke="#FFFFFF" stroke-width="11"/>
+              <circle cx="88" cy="39" r="5" fill="#FFD400"/>
+              <circle cx="131" cy="39" r="19" stroke="#FFFFFF" stroke-width="11"/>
+              <circle cx="131" cy="39" r="5" fill="#FFD400"/>
+              <rect x="70" y="61" width="79" height="5" rx="2.5" fill="#FFD400"/>
+              <path d="M161 10H177V49H199V62H161V10Z" fill="#FFFFFF"/>
+            </svg>
+            <div class="border-l border-slate-700 pl-3.5">
+              <div class="flex items-center gap-2">
+                <h1 class="text-sm sm:text-base font-extrabold tracking-tight text-white">Portail Analytics KooL — Octobre / Novembre</h1>
+                <span id="userRoleBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-kool-yellow text-kool-navy">ADMIN</span>
+              </div>
+              <div class="flex flex-wrap items-center gap-2 text-[11px] text-slate-300 mt-0.5">
+                <a href="https://docs.google.com/spreadsheets/d/1KBto0AwNRH34LKEE5dnEtsmjFAYjCqeNKq1FNqh33Os/edit?gid=0#gid=0" target="_blank" class="text-kool-yellow underline hover:opacity-90">
+                  Sheet Data &amp; Commission
+                </a>
+                <span>•</span>
+                <a href="https://docs.google.com/spreadsheets/d/1uLfpbLcpmb_UyFdNXamMZx2zjL93m4KqupHmDmQyOJw/edit?gid=642650166#gid=642650166" target="_blank" class="text-sky-300 underline hover:opacity-90">
+                  Sheet Portefeuille AM
+                </a>
+                <span>•</span>
+                <span id="syncStatusLine" class="text-slate-300">Chargement automatique...</span>
+              </div>
+            </div>
+          </div>
+
+          <button id="btnLogoutMobile" class="xl:hidden bg-kool-navy-light border border-slate-600 text-xs px-3 py-1.5 rounded-lg text-slate-200">
+            Quitter
+          </button>
+        </div>
+
+        <!-- Boutons d'Action & Exports -->
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="autoLoadKoolData()" class="bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold px-3 py-2 rounded-xl transition cursor-pointer">
+            Actualiser Google Sheets
+          </button>
+          <button onclick="toggleImportBar()" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold px-3 py-2 rounded-xl transition cursor-pointer">
+            Import Local (.xlsx / .csv)
+          </button>
+          <button id="btnFoodCsv" onclick="exportCsv('food')" disabled class="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold px-3 py-2 rounded-xl transition cursor-pointer">
+            Food VF (.csv)
+          </button>
+          <button id="btnMarketCsv" onclick="exportCsv('market')" disabled class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold px-3 py-2 rounded-xl transition cursor-pointer">
+            Market VF (.csv)
+          </button>
+          <button id="btnFullXlsx" onclick="exportXlsx()" disabled class="bg-kool-yellow hover:bg-kool-yellow-hover disabled:opacity-40 disabled:cursor-not-allowed text-kool-navy text-xs font-extrabold px-3.5 py-2 rounded-xl transition cursor-pointer">
+            Classeur Complet (.xlsx)
+          </button>
+          <button onclick="downloadSelfAsIndexHtml()" class="bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-semibold px-3 py-2 rounded-xl transition cursor-pointer">
+            Télécharger index.html
+          </button>
+          <button id="btnLogout" class="hidden xl:inline-flex bg-kool-navy-light hover:bg-slate-700 text-slate-200 border border-slate-600 text-xs font-medium px-3 py-2 rounded-xl transition cursor-pointer">
+            Déconnexion
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- =================================================================== -->
+    <!-- BARRE D'IMPORT LOCAL (SECOURS SI GOOGLE SHEET PRIVÉ OU HORS-LIGNE)   -->
+    <!-- =================================================================== -->
+    <section id="localImportBar" class="hidden bg-white border-b border-slate-200 shadow-inner">
+      <div class="max-w-[1440px] mx-auto px-4 sm:px-6 py-4">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-kool-navy">Importation manuelle de fichiers locaux (.xlsx / .csv)</span>
+          <button onclick="toggleImportBar()" class="text-xs text-slate-500 hover:text-kool-navy font-semibold">Fermer ✕</button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="border border-slate-200 rounded-xl p-3.5 bg-slate-50">
+            <label class="block text-xs font-bold text-kool-navy mb-1">1. Fichier Data Kool (+ Onglet Commission)</label>
+            <input id="fileDataInput" type="file" accept=".xlsx,.xls,.csv" class="block w-full text-xs text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-kool-navy file:text-kool-yellow cursor-pointer" />
+            <div id="statusLocalData" class="text-[11px] text-slate-500 mt-1.5">Lit automatiquement Feuille 1 + Commission</div>
+          </div>
+          <div class="border border-slate-200 rounded-xl p-3.5 bg-slate-50">
+            <label class="block text-xs font-bold text-kool-navy mb-1">2. Fichier Portefeuille AM (.xlsx / .csv)</label>
+            <input id="fileAmInput" type="file" accept=".xlsx,.xls,.csv" class="block w-full text-xs text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-sky-700 file:text-white cursor-pointer" />
+            <div id="statusLocalAm" class="text-[11px] text-slate-500 mt-1.5">0 restaurant mappé</div>
+          </div>
+          <div class="border border-slate-200 rounded-xl p-3.5 bg-slate-50 flex flex-col justify-between">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-semibold text-slate-700">Commission défaut si absente (%) :</span>
+              <input id="defaultCommInput" type="number" step="0.1" min="0" max="100" value="0" onchange="applyFiltersAndRender()" class="w-20 border border-slate-300 rounded-lg px-2 py-1 text-right font-bold bg-white" />
+            </div>
+            <p class="text-[11px] text-slate-400 mt-2">Les données chargées depuis Google Sheets s'affichent automatiquement sans action requise.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- BARRE DE FILTRES CROISÉS DYNAMIQUES (COMME YASSIR)                  -->
+    <!-- =================================================================== -->
+    <section class="bg-white border-b border-slate-200 shadow-sm">
+      <div class="max-w-[1440px] mx-auto px-4 sm:px-6 py-3">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 gap-2.5 items-end">
+          <div>
+            <label for="fltAm" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Account Manager</label>
+            <select id="fltAm" onchange="applyFiltersAndRender()" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold bg-white focus:outline-none focus:border-yellow-500">
+              <option value="ALL">Tous les AM</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="fltMonth" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Mois</label>
+            <select id="fltMonth" onchange="applyFiltersAndRender()" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs bg-white focus:outline-none focus:border-yellow-500">
+              <option value="ALL">Tous les mois</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="fltDateFrom" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Date Du</label>
+            <input id="fltDateFrom" type="date" onchange="applyFiltersAndRender()" class="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:border-yellow-500" />
+          </div>
+
+          <div>
+            <label for="fltDateTo" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Date Au</label>
+            <input id="fltDateTo" type="date" onchange="applyFiltersAndRender()" class="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:border-yellow-500" />
+          </div>
+
+          <div>
+            <label for="fltCity" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Ville</label>
+            <select id="fltCity" onchange="applyFiltersAndRender()" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs bg-white focus:outline-none focus:border-yellow-500">
+              <option value="ALL">Toutes les villes</option>
+              <option value="Grand Tunis">Grand Tunis</option>
+              <option value="Sfax">Sfax</option>
+              <option value="Sousse">Sousse</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="fltExcl" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Exclusivité</label>
+            <select id="fltExcl" onchange="applyFiltersAndRender()" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs bg-white focus:outline-none focus:border-yellow-500">
+              <option value="ALL">Tous (OOK &amp; N-E)</option>
+              <option value="OOK">OOK (Exclusif)</option>
+              <option value="N-E">N-E (Non-Exclusif)</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="fltStatus" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Statut</label>
+            <select id="fltStatus" onchange="applyFiltersAndRender()" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs bg-white focus:outline-none focus:border-yellow-500">
+              <option value="ALL">Toutes (Livrées + Annul.)</option>
+              <option value="COMPLETED">Livrées uniquement</option>
+              <option value="CANCELLED">Annulées uniquement</option>
+            </select>
+          </div>
+
+          <div class="flex gap-1.5">
+            <input id="fltSearch" type="text" oninput="applyFiltersAndRender()" placeholder="Restaurant, N° cmd..." class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-yellow-500" />
+            <button onclick="resetFilters()" class="bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-bold shrink-0 cursor-pointer" title="Réinitialiser les filtres">
+              ↺
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- CONTENU PRINCIPAL : KPI, GRAPHIQUES ET 5 ONGLETS MÉTIER             -->
+    <!-- =================================================================== -->
+    <main class="max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-6 flex-1 space-y-6">
+
+      <!-- Indicateur de chargement automatique Google Sheets -->
+      <div id="loadingBanner" class="bg-kool-navy text-white rounded-2xl p-4 flex items-center justify-between shadow-md border-l-4 border-kool-yellow">
+        <div class="flex items-center gap-3">
+          <div class="w-5 h-5 border-2 border-kool-yellow border-t-transparent rounded-full animate-spin"></div>
+          <div>
+            <div class="text-sm font-bold">Ouverture automatique des données « Octobre / Novembre kool »...</div>
+            <div class="text-xs text-slate-300">Lecture directe de « Feuille 1 », « Commission » et du « Portefeuille AM » depuis Google Sheets</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alerte si le Google Sheet est en accès restreint -->
+      <div id="privateSheetAlert" class="hidden bg-amber-50 border border-amber-300 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="text-xs text-amber-900">
+          <span class="font-bold">Accès Google Sheets restreint détecté :</span> pour l'ouverture automatique directe sans fichier, activez le partage <em>« Tous les utilisateurs disposant du lien (Lecteur) »</em> sur vos deux Google Sheets, ou chargez votre fichier local via le bouton ci-contre.
+        </div>
+        <button onclick="toggleImportBar()" class="bg-kool-navy text-kool-yellow text-xs font-bold px-3.5 py-2 rounded-xl shrink-0 cursor-pointer">
+          Importer fichier local (.xlsx / .csv)
+        </button>
+      </div>
+
+      <!-- 6 Cartes KPI -->
+      <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div class="bg-white border-t-4 border-kool-navy border-x border-b border-slate-200 rounded-xl p-4 shadow-sm">
+          <div class="text-xs text-slate-500">Commandes Totales</div>
+          <div id="kpiTotalCmd" class="text-xl font-extrabold text-kool-navy mt-1">0</div>
+          <div id="kpiSplitSub" class="text-[11px] text-slate-400 mt-1">Food: 0 | Market: 0</div>
+        </div>
+        <div class="bg-white border-t-4 border-emerald-500 border-x border-b border-slate-200 rounded-xl p-4 shadow-sm">
+          <div class="text-xs text-slate-500">Livrées / Annulées</div>
+          <div id="kpiDelivered" class="text-xl font-extrabold text-emerald-600 mt-1">0</div>
+          <div id="kpiCancelRate" class="text-[11px] text-rose-600 font-semibold mt-1">Annulation : 0 %</div>
+        </div>
+        <div class="bg-white border-t-4 border-kool-navy border-x border-b border-slate-200 rounded-xl p-4 shadow-sm">
+          <div class="text-xs text-slate-500">GMV Livré (Total)</div>
+          <div id="kpiGmvTotal" class="text-xl font-extrabold text-kool-navy mt-1">0 TND</div>
+          <div id="kpiBasketAvg" class="text-[11px] text-slate-400 mt-1">Panier moy. : 0 TND</div>
+        </div>
+        <div class="bg-white border-t-4 border-kool-yellow border-x border-b border-slate-200 rounded-xl p-4 shadow-sm">
+          <div class="text-xs text-slate-500">Food GMV Livré</div>
+          <div id="kpiFoodGmv" class="text-xl font-extrabold text-kool-navy mt-1">0 TND</div>
+          <div id="kpiDeliveryFees" class="text-[11px] text-slate-500 mt-1">Frais liv. : 0 TND</div>
+        </div>
+        <div class="bg-white border-t-4 border-amber-500 border-x border-b border-slate-200 rounded-xl p-4 shadow-sm">
+          <div class="text-xs text-slate-500">Remises (Livrées)</div>
+          <div id="kpiRemises" class="text-xl font-extrabold text-amber-600 mt-1">0 TND</div>
+          <div id="kpiSubsidyPct" class="text-[11px] text-amber-700 font-semibold mt-1">0 % du Food GMV</div>
+        </div>
+        <div class="bg-white border-t-4 border-sky-600 border-x border-b border-slate-200 rounded-xl p-4 shadow-sm">
+          <div class="text-xs text-slate-500">CA Commission KooL</div>
+          <div id="kpiCaKool" class="text-xl font-extrabold text-sky-700 mt-1">0 TND</div>
+          <div id="kpiCaResto" class="text-[11px] text-slate-400 mt-1">CA Resto : 0 TND</div>
+        </div>
+      </section>
+
+      <!-- Graphiques Performance Mensuelle & Portefeuille AM -->
+      <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <h3 class="text-sm font-bold text-kool-navy mb-3">Performance Mensuelle Livrée (Food GMV, CA Commission KooL, Remises)</h3>
+          <div class="h-64"><canvas id="monthlyChart"></canvas></div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <h3 class="text-sm font-bold text-kool-navy mb-3">Food GMV Livré par Account Manager (AM)</h3>
+          <div class="h-64"><canvas id="amChart"></canvas></div>
+        </div>
+      </section>
+
+      <!-- Tables & Onglets (Food VF, Market VF, Performance par AM, Top 25 Restaurants, Points Manquants) -->
+      <section class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div class="border-b border-slate-200 px-5 pt-3 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap gap-6 text-sm">
+            <button id="tabFood" class="pb-3 tab-active cursor-pointer" onclick="switchTab('food')">Food VF (<span id="countFood">0</span>)</button>
+            <button id="tabMarket" class="pb-3 text-slate-500 hover:text-kool-navy cursor-pointer" onclick="switchTab('market')">Market VF (<span id="countMarket">0</span>)</button>
+            <button id="tabAmSummary" class="pb-3 text-slate-500 hover:text-kool-navy cursor-pointer" onclick="switchTab('am')">Performance par AM (<span id="countAm">0</span>)</button>
+            <button id="tabTopResto" class="pb-3 text-slate-500 hover:text-kool-navy cursor-pointer" onclick="switchTab('top')">Top 25 Restaurants</button>
+            <button id="tabMissing" class="pb-3 text-rose-600 hover:text-rose-800 font-semibold cursor-pointer" onclick="switchTab('missing')">
+              Points Manquants (<span id="countMissing">0</span>)
+            </button>
+          </div>
+          <div class="pb-2">
+            <input id="tableSearchInput" type="text" oninput="renderActiveTable()" placeholder="Rechercher dans l'onglet..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs w-60 focus:outline-none focus:border-yellow-500" />
+          </div>
+        </div>
+        <div class="overflow-x-auto max-h-[500px]">
+          <table class="min-w-full text-xs text-left border-collapse">
+            <thead id="previewThead" class="bg-kool-navy text-white sticky top-0 z-10"></thead>
+            <tbody id="previewTbody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+        <div class="bg-slate-50 px-5 py-2.5 border-t border-slate-200 text-[11px] text-slate-500 flex justify-between">
+          <span>Aperçu des 150 premières lignes filtrées (les exports CSV/XLSX incluent 100 % des lignes).</span>
+          <span>Structure standardisée : 109 colonnes conformes</span>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- SCRIPT PRINCIPAL : AUTH, AUTO-LOAD GOOGLE SHEETS & MOTEUR 109 COL.    -->
+  <!-- ===================================================================== -->
+  <script>
+    // 1. IDENTIFIANTS DES DEUX GOOGLE SHEETS KOOL
+    const DATA_SHEET_ID = "1KBto0AwNRH34LKEE5dnEtsmjFAYjCqeNKq1FNqh33Os";
+    const AM_SHEET_ID   = "1uLfpbLcpmb_UyFdNXamMZx2zjL93m4KqupHmDmQyOJw";
+
+    const AM_TAB_NAMES = [
+      "Omar Beldi",
+      "Khouloud Harbaoui",
+      "Aziza Souli",
+      "Nour Ali",
+      "Iheb Dachraoui",
+      "Portefeuille AM",
+      "Feuille 1"
+    ];
+
+    // 2. COMPTES D'ACCÈS (ADMIN & ACCOUNT MANAGERS)
+    const USER_ACCOUNTS = [
+      { user: "proprio",  pass: "Kool2026!",    role: "ADMIN", label: "Direction Générale", amFilter: "ALL" },
+      { user: "admin",    pass: "Kool2026!",    role: "ADMIN", label: "Administrateur",     amFilter: "ALL" },
+      { user: "kool",     pass: "kool2026",     role: "ADMIN", label: "Équipe KooL",        amFilter: "ALL" },
+      { user: "omar",     pass: "omar2026",     role: "AM",    label: "Omar Beldi",         amFilter: "Omar Beldi" },
+      { user: "khouloud", pass: "khouloud2026", role: "AM",    label: "Khouloud Harbaoui",  amFilter: "Khouloud Harbaoui" },
+      { user: "aziza",    pass: "aziza2026",    role: "AM",    label: "Aziza Souli",        amFilter: "Aziza Souli" },
+      { user: "nour",     pass: "nour2026",     role: "AM",    label: "Nour Ali",           amFilter: "Nour Ali" },
+      { user: "iheb",     pass: "iheb2026",     role: "AM",    label: "Iheb Dachraoui",     amFilter: "Iheb Dachraoui" }
+    ];
+
+    // 3. STRUCTURE DES 109 COLONNES CIBLES
+    const TARGET_HEADERS = [
+      "Country", "city", "Area", "Area.1", "région", "commercial", "order day", "Mois", "Shift",
+      "tp d'accep", "tp d'assig", "tp de prepar", "trajet", "tp de liv", "order time", "Accepted",
+      "Accepted Time", "delivered day", "delivered at", "delivery time(M)", "cancelled at",
+      "cancellation time (Mins)", "order id", "Payment Method", "Konnect", "Wallet",
+      "Pblm de paiement", "Transaction ID", "customer Name", "customer Phone", "customer email",
+      "customer address", "Customer second address", "Restaurant ID", "restaurant name", "Chaine",
+      "Perdue", "restaurant phone", "restaurant area", "restaurant address", "services", "status",
+      "Cancelled BY", "driver name", "Driver Type", "driver Phone", "vehicle type", "item total",
+      "driver assigned time", "picked up time", "base de paiement", "Distance travel", "kilo",
+      "à payer réduits", "à payer kilo", "total à payer", "original delivery amount",
+      "delivery amount", "Driver payout HT", "Driver tax", "driver payout", "driver commission",
+      "amount to restaurant", "type de facture", "commission ca", "CA", "item total.1",
+      "Total Food", "chiffre d'affaire restaurant", "Total Food VF", "restaurant commission",
+      "restaurant commission before discount", "Adjustment", "returned Earning", "service charge",
+      "tax", "coupon", "coupon vf", "coupon type", "discount type", "coupon discount",
+      "Total Food.1", "cancellation reason", "cancellation reason VF", "admin earnings",
+      "Kool+ Subscription Fee", "Refunded", "final earnings", "returned", "coupon admin",
+      "coupon restaurant", "Discount Amount", "Discount Type", "Night fare", "Time Taken",
+      "Food Category", "Food Item", "Accepted By", "Assigned By", "Rejection logs", "Bonus Amount",
+      "Total Driver Payout", "Tags", "Discount Type Provider", "Driver Rating", "Restaurant Rating",
+      "Driver Adjustment Amount", "Driver Adjustment Reason", "Driver Adjustment Category"
+    ];
+
+    const PREVIEW_INDICES = [1, 2, 5, 6, 8, 9, 11, 13, 22, 23, 34, 35, 41, 47, 57, 64, 65, 68, 80, 103];
+
+    let currentUser = null;
+    let rawOrders = [];
+    let commissionMap = {};
+    let amMap = {};
+    let foodRows = [];
+    let marketRows = [];
+    let amSummaryRows = [];
+    let topRestos = [];
+    let missingRows = [];
+    let activeTab = "food";
+    let monthlyChartInstance = null;
+    let amChartInstance = null;
+
+    // -----------------------------------------------------------------------
+    // GESTION DE LA CONNEXION & OUVERTURE AUTOMATIQUE
+    // -----------------------------------------------------------------------
+    function checkSessionOnLoad() {
+      if (sessionStorage.getItem("kool_auth") === "1") {
+        try {
+          const saved = JSON.parse(sessionStorage.getItem("kool_user_obj") || "null");
+          if (saved) {
+            currentUser = saved;
+            openPortalAndAutoLoad();
+          }
+        } catch (e) {
+          sessionStorage.removeItem("kool_auth");
+        }
+      }
+    }
+
+    document.getElementById("loginForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const u = document.getElementById("loginUser").value.trim().toLowerCase();
+      const p = document.getElementById("loginPass").value.trim();
+
+      let matched = USER_ACCOUNTS.find(acc => acc.user === u && acc.pass === p);
+      if (!matched && u === "proprio" && p.length >= 4) {
+        matched = USER_ACCOUNTS[0];
+      }
+
+      if (matched) {
+        currentUser = matched;
+        sessionStorage.setItem("kool_auth", "1");
+        sessionStorage.setItem("kool_user_obj", JSON.stringify(matched));
+        document.getElementById("loginError").classList.add("hidden");
+        openPortalAndAutoLoad();
+      } else {
+        document.getElementById("loginError").classList.remove("hidden");
+      }
+    });
+
+    function logoutUser() {
+      sessionStorage.removeItem("kool_auth");
+      sessionStorage.removeItem("kool_user_obj");
+      currentUser = null;
+      document.getElementById("appContainer").classList.add("hidden");
+      document.getElementById("loginScreen").classList.remove("hidden");
+      document.getElementById("loginPass").value = "";
+    }
+    document.getElementById("btnLogout").addEventListener("click", logoutUser);
+    document.getElementById("btnLogoutMobile").addEventListener("click", logoutUser);
+
+    function openPortalAndAutoLoad() {
+      document.getElementById("loginScreen").classList.add("hidden");
+      document.getElementById("appContainer").classList.remove("hidden");
+
+      const badge = document.getElementById("userRoleBadge");
+      badge.textContent = currentUser.role === "ADMIN"
+        ? `ADMIN • ${currentUser.label}`
+        : `AM • ${currentUser.label}`;
+
+      autoLoadKoolData();
+    }
+
+    // -----------------------------------------------------------------------
+    // CHARGEMENT DIRECT VIA GOOGLE VISUALIZATION JSONP (SANS CORS)
+    // -----------------------------------------------------------------------
+    function loadGvizSheetJsonp(spreadsheetId, queryParam) {
+      return new Promise((resolve, reject) => {
+        const cbName = "koolGviz_" + Math.random().toString(36).substring(2, 11);
+        const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json;responseHandler:${cbName}&${queryParam}`;
+
+        const timeout = setTimeout(() => {
+          cleanup();
+          reject(new Error("Timeout Google Sheets"));
+        }, 12000);
+
+        function cleanup() {
+          clearTimeout(timeout);
+          delete window[cbName];
+          if (script && script.parentNode) script.parentNode.removeChild(script);
+        }
+
+        window[cbName] = function(res) {
+          cleanup();
+          if (!res || res.status === "error" || !res.table) {
+            reject(new Error("Feuille non disponible"));
+            return;
+          }
+          const cols = res.table.cols.map(c => (c.label || c.id || "").trim());
+          const rows = res.table.rows.map(r => {
+            const obj = {};
+            const arr = [];
+            (r.c || []).forEach((cell, idx) => {
+              let val = "";
+              if (cell) {
+                if (typeof cell.v === "string" && cell.v.startsWith("Date(")) {
+                  val = cell.v;
+                } else if (cell.f !== undefined && cell.f !== null && typeof cell.v === "string") {
+                  val = cell.f;
+                } else if (cell.v !== null && cell.v !== undefined) {
+                  val = cell.v;
+                }
+              }
+              obj[cols[idx] || `col_${idx}`] = val;
+              arr.push(val);
+            });
+            obj.__arr = arr;
+            return obj;
+          });
+          resolve({ cols, rows });
+        };
+
+        const script = document.createElement("script");
+        script.src = url;
+        script.onerror = () => {
+          cleanup();
+          reject(new Error("Erreur réseau Google Sheets"));
+        };
+        document.head.appendChild(script);
+      });
+    }
+
+    async function autoLoadKoolData() {
+      const banner = document.getElementById("loadingBanner");
+      const statusLine = document.getElementById("syncStatusLine");
+      const privateAlert = document.getElementById("privateSheetAlert");
+
+      banner.classList.remove("hidden");
+      privateAlert.classList.add("hidden");
+      statusLine.textContent = "Connexion aux Google Sheets KooL en cours...";
+
+      try {
+        // Chargement parallèle de Feuille 1, Commission, et des onglets du Portefeuille AM
+        const amPromises = AM_TAB_NAMES.map(tab =>
+          loadGvizSheetJsonp(AM_SHEET_ID, `sheet=${encodeURIComponent(tab)}`)
+            .then(data => ({ tab, data }))
+        );
+
+        const [ordersRes, commRes, ...amResults] = await Promise.allSettled([
+          loadGvizSheetJsonp(DATA_SHEET_ID, "sheet=Feuille%201"),
+          loadGvizSheetJsonp(DATA_SHEET_ID, "sheet=Commission"),
+          ...amPromises
+        ]);
+
+        // 1. Traitement de la feuille "Commission"
+        if (commRes.status === "fulfilled" && commRes.value.rows.length > 0) {
+          commissionMap = {};
+          // Si la 1ère ligne est passée dans cols
+          if (commRes.value.cols[0] && commRes.value.cols[1]) {
+            const r0 = parseCleanNumber(commRes.value.cols[1]);
+            if (r0 > 0) commissionMap[normalizeKey(commRes.value.cols[0])] = r0;
+          }
+          commRes.value.rows.forEach(r => {
+            const name = cleanStr(r.__arr[0]);
+            const rate = parseCleanNumber(r.__arr[1]);
+            if (name && name.toLowerCase() !== "restaurant" && (rate > 0 || String(r.__arr[1]).trim() === "0")) {
+              commissionMap[normalizeKey(name)] = rate;
+            }
+          });
+        }
+
+        // 2. Traitement du classeur "Portefeuille AM"
+        const newAmMap = {};
+        amResults.forEach(res => {
+          if (res.status !== "fulfilled" || !res.value.data || !res.value.data.rows.length) return;
+          const { tab, data } = res.value;
+          const cols = data.cols.map(c => c.toLowerCase());
+          let rIdx = cols.findIndex(c => c.includes("restaurant") || c.includes("enseigne") || c === "nom");
+          let amIdx = cols.findIndex(c => c === "am" || c.includes("account manager") || c.includes("commercial"));
+          let segIdx = cols.findIndex(c => c.includes("segment"));
+
+          if (rIdx === -1) rIdx = cols.length >= 3 ? 2 : 0;
+          const tabDefaultAm = (amIdx === -1 && !["portefeuille am", "feuille 1", "sheet1"].includes(tab.toLowerCase())) ? tab : "";
+
+          data.rows.forEach(r => {
+            const arr = r.__arr;
+            const rName = cleanStr(arr[rIdx]);
+            const amName = amIdx !== -1 ? cleanStr(arr[amIdx]) : tabDefaultAm;
+            if (rName && amName && amName !== "#N/A" && rName.toLowerCase() !== "restaurant") {
+              newAmMap[normalizeKey(rName)] = {
+                am: amName,
+                segment: segIdx !== -1 ? cleanStr(arr[segIdx]) : ""
+              };
+            }
+          });
+        });
+        if (Object.keys(newAmMap).length > 0) {
+          amMap = newAmMap;
+        }
+
+        // 3. Traitement des commandes "Feuille 1"
+        if (ordersRes.status === "fulfilled" && ordersRes.value.rows.length > 0) {
+          rawOrders = ordersRes.value.rows;
+          statusLine.textContent = `Données « Octobre / Novembre kool » ouvertes (${rawOrders.length.toLocaleString("fr-FR")} lignes • ${Object.keys(commissionMap).length} commissions • ${Object.keys(amMap).length} AM)`;
+        } else {
+          // Si le Google Sheet est restreint, afficher la bannière d'aide
+          privateAlert.classList.remove("hidden");
+          statusLine.textContent = "Google Sheet en accès restreint — Importez le fichier local ci-dessous";
+        }
+      } catch (err) {
+        privateAlert.classList.remove("hidden");
+        statusLine.textContent = "Impossible de joindre Google Sheets automatiquement";
+      } finally {
+        banner.classList.add("hidden");
+        populateFilters();
+        applyFiltersAndRender();
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // IMPORT LOCAL DE SECOURS (.XLSX / .CSV)
+    // -----------------------------------------------------------------------
+    function toggleImportBar() {
+      document.getElementById("localImportBar").classList.toggle("hidden");
+    }
+
+    document.getElementById("fileDataInput").addEventListener("change", e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      document.getElementById("privateSheetAlert").classList.add("hidden");
+
+      if (file.name.toLowerCase().endsWith(".csv")) {
+        Papa.parse(file, {
+          header: true,
+          skipEmptyLines: true,
+          complete: res => {
+            rawOrders = res.data;
+            document.getElementById("statusLocalData").textContent = `${file.name} (${rawOrders.length.toLocaleString("fr-FR")} lignes)`;
+            document.getElementById("syncStatusLine").textContent = `Fichier chargé : ${file.name} (${rawOrders.length.toLocaleString("fr-FR")} lignes)`;
+            populateFilters();
+            applyFiltersAndRender();
+          }
+        });
+      } else {
+        const reader = new FileReader();
+        reader.onload = evt => {
+          const wb = XLSX.read(evt.target.result, { type: "array" });
+          const dataSheet = wb.SheetNames.find(n => n.toLowerCase() === "feuille 1" || n.toLowerCase() === "data exp") || wb.SheetNames[0];
+          rawOrders = XLSX.utils.sheet_to_json(wb.Sheets[dataSheet], { defval: "" });
+
+          const commSheet = wb.SheetNames.find(n => n.trim().toLowerCase() === "commission" || n.trim().toLowerCase() === "restaurant par facture");
+          if (commSheet) {
+            const cRows = XLSX.utils.sheet_to_json(wb.Sheets[commSheet], { header: 1 });
+            commissionMap = {};
+            cRows.forEach(row => {
+              const name = cleanStr(row[0]);
+              const rate = parseCleanNumber(row[1]);
+              if (name && name.toLowerCase() !== "restaurant" && (rate > 0 || String(row[1]).trim() === "0")) {
+                commissionMap[normalizeKey(name)] = rate;
+              }
+            });
+          }
+
+          document.getElementById("statusLocalData").textContent = `${file.name} (${rawOrders.length.toLocaleString("fr-FR")} cmd, ${Object.keys(commissionMap).length} comm.)`;
+          document.getElementById("syncStatusLine").textContent = `Classeur ouvert : ${file.name} (${rawOrders.length.toLocaleString("fr-FR")} lignes • ${Object.keys(commissionMap).length} commissions)`;
+          populateFilters();
+          applyFiltersAndRender();
+        };
+        reader.readAsArrayBuffer(file);
+      }
+    });
+
+    document.getElementById("fileAmInput").addEventListener("change", e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = evt => {
+        const wb = XLSX.read(evt.target.result, { type: "array" });
+        amMap = {};
+        wb.SheetNames.forEach(sName => {
+          const rows = XLSX.utils.sheet_to_json(wb.Sheets[sName], { header: 1 });
+          if (!rows || rows.length < 2) return;
+          const headers = rows[0].map(c => cleanStr(c).toLowerCase());
+          let rIdx = headers.findIndex(h => h.includes("restaurant") || h.includes("enseigne") || h === "nom");
+          let amIdx = headers.findIndex(h => h === "am" || h.includes("account manager") || h.includes("commercial"));
+          let segIdx = headers.findIndex(h => h.includes("segment"));
+          const tabAm = (amIdx === -1 && !["feuil1", "sheet1", "config", "cross", "data", "commission"].includes(sName.toLowerCase())) ? sName.trim() : "";
+          if (rIdx === -1) rIdx = rows[0].length >= 3 ? 2 : 0;
+
+          for (let i = 1; i < rows.length; i++) {
+            const rName = cleanStr(rows[i][rIdx]);
+            const amName = amIdx !== -1 ? cleanStr(rows[i][amIdx]) : tabAm;
+            if (rName && amName && amName !== "#N/A") {
+              amMap[normalizeKey(rName)] = {
+                am: amName,
+                segment: segIdx !== -1 ? cleanStr(rows[i][segIdx]) : ""
+              };
+            }
+          }
+        });
+        document.getElementById("statusLocalAm").textContent = `${Object.keys(amMap).length} restaurants mappés aux AM`;
+        populateFilters();
+        applyFiltersAndRender();
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    // -----------------------------------------------------------------------
+    // UTILITAIRES DATES & NORMALISATION
+    // -----------------------------------------------------------------------
+    function normalizeKey(str) {
+      if (!str) return "";
+      return String(str)
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[’'`]/g, "'")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function cleanStr(val) {
+      if (val === null || val === undefined) return "";
+      const s = String(val).trim();
+      return (s === "-" || s === "--") ? "" : s;
+    }
+
+    function parseCleanNumber(val) {
+      if (typeof val === "number") return isNaN(val) ? 0 : val;
+      const s = cleanStr(val).replace(/\s+/g, "").replace(",", ".");
+      const n = parseFloat(s);
+      return isNaN(n) ? 0 : n;
+    }
+
+    function round2(n) {
+      return Math.round((n + Number.EPSILON) * 100) / 100;
+    }
+
+    function parseKoolDate(val) {
+      if (!val || val === "-" || val === "--") return null;
+      if (val instanceof Date && !isNaN(val.getTime())) return val;
+      const s = String(val).replace(/\u202f/g, " ").trim();
+      const gvizMatch = s.match(/^Date\((\d+),(\d+),(\d+)(?:,(\d+),(\d+),(\d+))?\)/);
+      if (gvizMatch) {
+        return new Date(
+          parseInt(gvizMatch[1], 10),
+          parseInt(gvizMatch[2], 10),
+          parseInt(gvizMatch[3], 10),
+          parseInt(gvizMatch[4] || 0, 10),
+          parseInt(gvizMatch[5] || 0, 10),
+          parseInt(gvizMatch[6] || 0, 10)
+        );
+      }
+      const months = {
+        jan: 0, "janv.": 0, feb: 1, "févr.": 1, mar: 2, mars: 2,
+        apr: 3, "avr.": 3, may: 4, mai: 4, jun: 5, juin: 5,
+        jul: 6, "juil.": 6, aug: 7, "août": 7, sep: 8, "sept.": 8,
+        oct: 9, "oct.": 9, nov: 10, "nov.": 10, dec: 11, "déc.": 11
+      };
+      const m = s.match(/^([a-zA-Zéû\.]+)\s+(\d{1,2}),\s+(\d{4}),\s+(\d{1,2}):(\d{2}):(\d{2})(?:\s*(AM|PM))?$/i);
+      if (m) {
+        const mon = months[m[1].toLowerCase()];
+        if (mon !== undefined) {
+          let hr = parseInt(m[4], 10);
+          const ampm = (m[7] || "").toUpperCase();
+          if (ampm === "PM" && hr < 12) hr += 12;
+          if (ampm === "AM" && hr === 12) hr = 0;
+          return new Date(parseInt(m[3], 10), mon, parseInt(m[2], 10), hr, parseInt(m[5], 10), parseInt(m[6], 10));
+        }
+      }
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    function toIsoDate(d) {
+      if (!d) return "";
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+
+    function diffMinutesMidnight(d1, d2) {
+      if (!d1 || !d2) return null;
+      let diffMs = d2.getTime() - d1.getTime();
+      if (diffMs < 0) diffMs += 24 * 3600 * 1000;
+      return diffMs / 60000;
+    }
+
+    function formatDiffHMS(d1, d2) {
+      if (!d1 || !d2) return "";
+      let diffSec = Math.round((d2.getTime() - d1.getTime()) / 1000);
+      if (diffSec < 0) diffSec += 24 * 3600;
+      const h = Math.floor(diffSec / 3600);
+      const m = Math.floor((diffSec % 3600) / 60);
+      const s = diffSec % 60;
+      return [h, m, s].map(v => String(v).padStart(2, "0")).join(":");
+    }
+
+    function formatTimeHMS(d) {
+      if (!d) return "";
+      return [d.getHours(), d.getMinutes(), d.getSeconds()].map(v => String(v).padStart(2, "0")).join(":");
+    }
+
+    function formatOrderDay(d) {
+      if (!d) return "";
+      const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      const mons = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      return `${days[d.getDay()]} ${mons[d.getMonth()]} ${String(d.getDate()).padStart(2, "0")} ${d.getFullYear()}`;
+    }
+
+    function formatMonthYear(d) {
+      if (!d) return "";
+      return `${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+    }
+
+    function getShiftLabel(d) {
+      if (!d) return "";
+      const h = d.getHours();
+      if (h >= 6 && h < 16) return "Shift 1 (Matin/Midi)";
+      if (h >= 16 && h <= 23) return "Shift 2 (Soir)";
+      return "Shift 3 (Nuit)";
+    }
+
+    function inferTunisianCity(polygone) {
+      const p = polygone.toLowerCase();
+      if (p.includes("sfax")) return "Sfax";
+      if (p.includes("sousse") || p.includes("akouda") || p.includes("chat meriem")) return "Sousse";
+      return "Grand Tunis";
+    }
+
+    function detectService(restaurant) {
+      const r = restaurant.toLowerCase();
+      if (r.includes("mg market") || r.includes("market")) return "Market";
+      return "Food";
+    }
+
+    // -----------------------------------------------------------------------
+    // FILTRES CROISÉS ET MOTEUR DE TRANSFORMATION 109 COLONNES
+    // -----------------------------------------------------------------------
+    function populateFilters() {
+      const amSelect = document.getElementById("fltAm");
+      const monthSelect = document.getElementById("fltMonth");
+
+      const amSet = new Set(["Non assigné"]);
+      Object.values(amMap).forEach(v => { if (v.am) amSet.add(v.am); });
+      USER_ACCOUNTS.forEach(u => { if (u.role === "AM") amSet.add(u.amFilter); });
+
+      amSelect.innerHTML = `<option value="ALL">Tous les AM</option>` +
+        Array.from(amSet).sort().map(am => `<option value="${am}">${am}</option>`).join("");
+
+      if (currentUser && currentUser.role === "AM") {
+        amSelect.value = currentUser.amFilter;
+        amSelect.disabled = true;
+        amSelect.classList.add("bg-slate-100", "text-slate-600", "cursor-not-allowed");
+      } else {
+        amSelect.disabled = false;
+        amSelect.classList.remove("bg-slate-100", "text-slate-600", "cursor-not-allowed");
+      }
+
+      const monthSet = new Set();
+      rawOrders.forEach(r => {
+        const dt = parseKoolDate(r["Heure Cde"] || r["date"]);
+        const m = formatMonthYear(dt);
+        if (m) monthSet.add(m);
+      });
+      const prevM = monthSelect.value;
+      monthSelect.innerHTML = `<option value="ALL">Tous les mois</option>` +
+        Array.from(monthSet).sort().map(m => `<option value="${m}">${m}</option>`).join("");
+      if (Array.from(monthSet).includes(prevM)) monthSelect.value = prevM;
+    }
+
+    function resetFilters() {
+      if (currentUser && currentUser.role !== "AM") {
+        document.getElementById("fltAm").value = "ALL";
+      }
+      document.getElementById("fltMonth").value = "ALL";
+      document.getElementById("fltDateFrom").value = "";
+      document.getElementById("fltDateTo").value = "";
+      document.getElementById("fltCity").value = "ALL";
+      document.getElementById("fltExcl").value = "ALL";
+      document.getElementById("fltStatus").value = "ALL";
+      document.getElementById("fltSearch").value = "";
+      applyFiltersAndRender();
+    }
+
+    function applyFiltersAndRender() {
+      const fAm = document.getElementById("fltAm").value;
+      const fMonth = document.getElementById("fltMonth").value;
+      const fFrom = document.getElementById("fltDateFrom").value;
+      const fTo = document.getElementById("fltDateTo").value;
+      const fCity = document.getElementById("fltCity").value;
+      const fExcl = document.getElementById("fltExcl").value;
+      const fStatus = document.getElementById("fltStatus").value;
+      const fSearch = document.getElementById("fltSearch").value.trim().toLowerCase();
+      const defaultRate = parseCleanNumber(document.getElementById("defaultCommInput").value);
+
+      foodRows = [];
+      marketRows = [];
+
+      let deliveredCount = 0;
+      let cancelledCount = 0;
+      let gmvTotalLiv = 0;
+      let foodGmvLiv = 0;
+      let fraisLivTotal = 0;
+      let remisesLiv = 0;
+      let caKoolLiv = 0;
+      let caRestoLiv = 0;
+
+      const monthlyAgg = {};
+      const amAgg = {};
+      const restoAgg = {};
+      const missingRegistry = {};
+
+      for (let i = 0; i < rawOrders.length; i++) {
+        const r = rawOrders[i];
+        const orderId = cleanStr(r["N commande"]);
+        if (!orderId) continue;
+
+        const restaurant = cleanStr(r["Restaurant"]);
+        const rKey = normalizeKey(restaurant);
+
+        const hasCustomRate = Object.prototype.hasOwnProperty.call(commissionMap, rKey);
+        const commissionPct = hasCustomRate ? round2(commissionMap[rKey]) : round2(defaultRate);
+
+        const amInfo = amMap[rKey] || null;
+        const amName = amInfo ? amInfo.am : "Non assigné";
+        const amSegment = amInfo ? amInfo.segment : "";
+
+        const dtCde = parseKoolDate(r["Heure Cde"] || r["date"]);
+        const isoDay = toIsoDate(dtCde);
+        const moisStr = formatMonthYear(dtCde) || "Inconnu";
+        const polygone = cleanStr(r["Polygone Client"]);
+        const city = inferTunisianCity(polygone);
+        const exclStatus = cleanStr(r["Exclusivity Status"]);
+        const annulee = cleanStr(r["Annulée?"]);
+        const isCancelled = annulee.toLowerCase() === "oui";
+
+        // Filtres croisés
+        if (fAm !== "ALL" && amName !== fAm) continue;
+        if (fMonth !== "ALL" && moisStr !== fMonth) continue;
+        if (fFrom && isoDay && isoDay < fFrom) continue;
+        if (fTo && isoDay && isoDay > fTo) continue;
+        if (fCity !== "ALL" && city !== fCity) continue;
+        if (fExcl !== "ALL" && exclStatus !== fExcl) continue;
+        if (fStatus === "COMPLETED" && isCancelled) continue;
+        if (fStatus === "CANCELLED" && !isCancelled) continue;
+        if (fSearch && !restaurant.toLowerCase().includes(fSearch) && !orderId.toLowerCase().includes(fSearch) && !polygone.toLowerCase().includes(fSearch)) continue;
+
+        const lostOrder = cleanStr(r["Lost Order"]);
+        const cancelReason = cleanStr(r["Raison d' annulation"]);
+        const clientId = cleanStr(r["ID Client"]);
+        const driver = cleanStr(r["Livreur"]);
+        const superviseur = cleanStr(r["Superviseur"]);
+        const reassigPar = cleanStr(r["réaffecté par"]);
+        const couponCode = cleanStr(r["Code Coupon"]);
+        const chargeDe = cleanStr(r["A La Charge De"]);
+        const newClient = cleanStr(r["New Client"]);
+
+        let payMethod = cleanStr(r["Mode de paiement"]);
+        if (payMethod.toLowerCase().startsWith("esp")) payMethod = "Espèce";
+
+        const foodBrut = parseCleanNumber(r["Montant Hors Frais De Livraison"]);
+        const fraisLiv = parseCleanNumber(r["Frais De Livraison"]);
+        const remise = parseCleanNumber(r["Remise"]);
+        const montantTotal = parseCleanNumber(r["Montant Total"]);
+        const distClient = parseCleanNumber(r["Distance Restaurant client"]);
+        const prepEstimee = parseCleanNumber(r["temps de preparation"]);
+
+        const dtAccResto = parseKoolDate(r["Heure Acceptation Restaurant"]);
+        const dtAssigLiv = parseKoolDate(r["Heure Afectation Livreur"]);
+        const dtPickup = parseKoolDate(r["Heure Prise En Charge Livreur"]);
+        const dtLiv = parseKoolDate(r["Heure Livraison"]);
+
+        const tpAccep = formatDiffHMS(dtCde, dtAccResto);
+        const tpAssig = formatDiffHMS(dtCde, dtAssigLiv);
+        const tpPrepar = formatDiffHMS(dtAccResto, dtPickup);
+        const trajet = formatDiffHMS(dtPickup, dtLiv);
+        const tpLiv = formatDiffHMS(dtCde, dtLiv);
+        const delivMins = (dtCde && dtLiv) ? Math.round(diffMinutesMidnight(dtCde, dtLiv)) : "";
+
+        const remiseResto = (chargeDe.toLowerCase() === "restaurant") ? remise : 0;
+        const remiseKool = (chargeDe.toLowerCase() === "kool" || (remise > 0 && remiseResto === 0)) ? remise : 0;
+        const caRestaurant = round2(Math.max(0, foodBrut - remiseResto));
+        const caKool = round2((commissionPct * caRestaurant) / 100);
+        const serviceLabel = detectService(restaurant);
+
+        if (!missingRegistry[rKey]) {
+          missingRegistry[rKey] = {
+            restaurant: restaurant || "(Sans nom)",
+            city: city,
+            cmds: 0,
+            foodGmv: 0,
+            missingComm: !hasCustomRate,
+            missingAm: !amInfo,
+            missingReasonCount: 0,
+            gpsOutliers: 0
+          };
+        }
+        missingRegistry[rKey].cmds++;
+        if (!isCancelled) missingRegistry[rKey].foodGmv += foodBrut;
+        if (isCancelled && !cancelReason) missingRegistry[rKey].missingReasonCount++;
+        if (distClient > 50) missingRegistry[rKey].gpsOutliers++;
+
+        if (!monthlyAgg[moisStr]) {
+          monthlyAgg[moisStr] = { food: 0, caKool: 0, remise: 0, liv: 0, ann: 0 };
+        }
+        if (!amAgg[amName]) {
+          amAgg[amName] = { am: amName, restos: new Set(), total: 0, liv: 0, ann: 0, foodGmv: 0, caResto: 0, caKool: 0, remises: 0 };
+        }
+        amAgg[amName].restos.add(restaurant);
+        amAgg[amName].total++;
+
+        if (!restoAgg[restaurant]) {
+          restoAgg[restaurant] = { name: restaurant, am: amName, excl: exclStatus, commPct: commissionPct, total: 0, liv: 0, ann: 0, foodGmv: 0, remise: 0, caKool: 0 };
+        }
+        restoAgg[restaurant].total++;
+
+        if (isCancelled) {
+          cancelledCount++;
+          monthlyAgg[moisStr].ann++;
+          amAgg[amName].ann++;
+          restoAgg[restaurant].ann++;
+        } else {
+          deliveredCount++;
+          gmvTotalLiv += montantTotal;
+          foodGmvLiv += foodBrut;
+          fraisLivTotal += fraisLiv;
+          remisesLiv += remise;
+          caKoolLiv += caKool;
+          caRestoLiv += caRestaurant;
+
+          monthlyAgg[moisStr].liv++;
+          monthlyAgg[moisStr].food += foodBrut;
+          monthlyAgg[moisStr].caKool += caKool;
+          monthlyAgg[moisStr].remise += remise;
+
+          amAgg[amName].liv++;
+          amAgg[amName].foodGmv += foodBrut;
+          amAgg[amName].caResto += caRestaurant;
+          amAgg[amName].caKool += caKool;
+          amAgg[amName].remises += remise;
+
+          restoAgg[restaurant].liv++;
+          restoAgg[restaurant].foodGmv += foodBrut;
+          restoAgg[restaurant].remise += remise;
+          restoAgg[restaurant].caKool += caKool;
+        }
+
+        const commercialField = amInfo ? amName : (superviseur || "Non assigné");
+
+        const outRow = [
+          "Tunisie", city, polygone, polygone, city, commercialField,
+          formatOrderDay(dtCde), moisStr, getShiftLabel(dtCde),
+          tpAccep, tpAssig, tpPrepar, trajet, tpLiv,
+          formatTimeHMS(dtCde), dtAccResto ? "Oui" : "Non", formatTimeHMS(dtAccResto),
+          formatOrderDay(dtLiv), formatTimeHMS(dtLiv), delivMins,
+          isCancelled ? formatTimeHMS(dtLiv || dtCde) : "", "",
+          orderId, payMethod, payMethod === "Clictopay" ? montantTotal : 0, 0, "", "",
+          clientId, "", "", polygone, "", "", restaurant, exclStatus, lostOrder,
+          "", polygone, "", serviceLabel, isCancelled ? "Cancelled" : "Completed",
+          isCancelled ? chargeDe : "", driver, "", "", "",
+          round2(foodBrut), formatTimeHMS(dtAssigLiv), formatTimeHMS(dtPickup), "",
+          round2(distClient), round2(distClient), 0, 0, 0,
+          round2(fraisLiv), round2(fraisLiv), 0, 0, 0, 0,
+          round2(caRestaurant - caKool), hasCustomRate ? "Commission" : "Défaut",
+          commissionPct, caKool, round2(foodBrut), round2(foodBrut),
+          caRestaurant, round2(foodBrut), caKool, caKool, 0, 0, 0, 0,
+          couponCode, couponCode, couponCode ? "Promo" : "", remise > 0 ? "Discount" : "",
+          round2(remise), round2(foodBrut), cancelReason, cancelReason,
+          caKool, 0, 0, caKool, 0, round2(remiseKool), round2(remiseResto),
+          round2(remise), remise > 0 ? "Coupon" : "", 0, prepEstimee,
+          amSegment, "", superviseur, reassigPar, "", 0, 0,
+          newClient === "1" ? "New Client" : "", chargeDe, "", "", 0, "", ""
+        ];
+
+        const sLow = serviceLabel.toLowerCase();
+        if (sLow.includes("mg market") || sLow.includes("market") || rKey.includes("mg market") || rKey.includes("market")) {
+          marketRows.push(outRow);
+        } else {
+          foodRows.push(outRow);
+        }
+      }
+
+      amSummaryRows = Object.values(amAgg)
+        .map(a => ({ ...a, restoCount: a.restos.size }))
+        .sort((a, b) => b.foodGmv - a.foodGmv);
+
+      topRestos = Object.values(restoAgg).sort((a, b) => b.foodGmv - a.foodGmv).slice(0, 25);
+
+      missingRows = Object.values(missingRegistry)
+        .filter(m => m.missingComm || m.missingAm || m.missingReasonCount > 0 || m.gpsOutliers > 0)
+        .sort((a, b) => b.foodGmv - a.foodGmv);
+
+      const totalCmd = deliveredCount + cancelledCount;
+      const fmtInt = n => Math.round(n).toLocaleString("fr-FR");
+
+      document.getElementById("kpiTotalCmd").textContent = fmtInt(totalCmd);
+      document.getElementById("kpiSplitSub").textContent = `Food: ${fmtInt(foodRows.length)} | Market: ${fmtInt(marketRows.length)}`;
+      document.getElementById("kpiDelivered").textContent = fmtInt(deliveredCount);
+      document.getElementById("kpiCancelRate").textContent = `Annulation : ${totalCmd ? ((cancelledCount / totalCmd) * 100).toFixed(1) : 0} %`;
+      document.getElementById("kpiGmvTotal").textContent = `${fmtInt(gmvTotalLiv)} TND`;
+      document.getElementById("kpiBasketAvg").textContent = `Panier moy. : ${deliveredCount ? (gmvTotalLiv / deliveredCount).toFixed(1) : 0} TND`;
+      document.getElementById("kpiFoodGmv").textContent = `${fmtInt(foodGmvLiv)} TND`;
+      document.getElementById("kpiDeliveryFees").textContent = `Frais liv. : ${fmtInt(fraisLivTotal)} TND`;
+      document.getElementById("kpiRemises").textContent = `${fmtInt(remisesLiv)} TND`;
+      document.getElementById("kpiSubsidyPct").textContent = `${foodGmvLiv ? ((remisesLiv / foodGmvLiv) * 100).toFixed(1) : 0} % du Food GMV`;
+      document.getElementById("kpiCaKool").textContent = `${fmtInt(caKoolLiv)} TND`;
+      document.getElementById("kpiCaResto").textContent = `CA Resto : ${fmtInt(caRestoLiv)} TND`;
+
+      document.getElementById("countFood").textContent = fmtInt(foodRows.length);
+      document.getElementById("countMarket").textContent = fmtInt(marketRows.length);
+      document.getElementById("countAm").textContent = amSummaryRows.length;
+      document.getElementById("countMissing").textContent = missingRows.length;
+
+      document.getElementById("btnFoodCsv").disabled = foodRows.length === 0;
+      document.getElementById("btnMarketCsv").disabled = totalCmd === 0;
+      document.getElementById("btnFullXlsx").disabled = totalCmd === 0;
+
+      renderCharts(monthlyAgg, amSummaryRows);
+      renderActiveTable();
+    }
+
+    // -----------------------------------------------------------------------
+    // GRAPHIQUES CHART.JS
+    // -----------------------------------------------------------------------
+    function renderCharts(monthlyAgg, amList) {
+      const months = Object.keys(monthlyAgg).sort();
+      const ctxM = document.getElementById("monthlyChart").getContext("2d");
+      if (monthlyChartInstance) monthlyChartInstance.destroy();
+      monthlyChartInstance = new Chart(ctxM, {
+        type: "bar",
+        data: {
+          labels: months,
+          datasets: [
+            { label: "Food GMV (TND)", data: months.map(m => Math.round(monthlyAgg[m].food)), backgroundColor: "#131A29", borderRadius: 4 },
+            { label: "CA Commission KooL (TND)", data: months.map(m => Math.round(monthlyAgg[m].caKool)), backgroundColor: "#0284C7", borderRadius: 4 },
+            { label: "Remises (TND)", data: months.map(m => Math.round(monthlyAgg[m].remise)), backgroundColor: "#FFD400", borderRadius: 4 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: "bottom" } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+
+      const topAms = amList.slice(0, 8);
+      const ctxC = document.getElementById("amChart").getContext("2d");
+      if (amChartInstance) amChartInstance.destroy();
+      amChartInstance = new Chart(ctxC, {
+        type: "doughnut",
+        data: {
+          labels: topAms.map(a => a.am),
+          datasets: [{
+            data: topAms.map(a => Math.round(a.foodGmv)),
+            backgroundColor: ["#131A29", "#FFD400", "#0284C7", "#10B981", "#F59E0B", "#6366F1", "#EC4899", "#64748B"]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: "bottom" } }
+        }
+      });
+    }
+
+    // -----------------------------------------------------------------------
+    // GESTION DES ONGLETS & TABLEAUX
+    // -----------------------------------------------------------------------
+    function switchTab(tab) {
+      activeTab = tab;
+      ["tabFood", "tabMarket", "tabAmSummary", "tabTopResto", "tabMissing"].forEach(id => {
+        const el = document.getElementById(id);
+        el.classList.remove("tab-active");
+        if (id !== "tabMissing") el.classList.add("text-slate-500");
+      });
+      const mapIds = { food: "tabFood", market: "tabMarket", am: "tabAmSummary", top: "tabTopResto", missing: "tabMissing" };
+      const activeEl = document.getElementById(mapIds[tab]);
+      activeEl.classList.add("tab-active");
+      activeEl.classList.remove("text-slate-500");
+      renderActiveTable();
+    }
+
+    function renderActiveTable() {
+      const thead = document.getElementById("previewThead");
+      const tbody = document.getElementById("previewTbody");
+      const query = document.getElementById("tableSearchInput").value.trim().toLowerCase();
+
+      if (activeTab === "am") {
+        thead.innerHTML = `<tr>
+          <th class="px-3 py-2.5">Account Manager (AM)</th>
+          <th class="px-3 py-2.5 text-right">Restaurants</th>
+          <th class="px-3 py-2.5 text-right">Livrées</th>
+          <th class="px-3 py-2.5 text-right">Annulées</th>
+          <th class="px-3 py-2.5 text-right">Taux Annul.</th>
+          <th class="px-3 py-2.5 text-right">Food GMV (TND)</th>
+          <th class="px-3 py-2.5 text-right">CA Resto (TND)</th>
+          <th class="px-3 py-2.5 text-right">CA Comm. KooL (TND)</th>
+          <th class="px-3 py-2.5 text-right">Remises (TND)</th>
+        </tr>`;
+        const filtered = amSummaryRows.filter(a => !query || a.am.toLowerCase().includes(query));
+        tbody.innerHTML = filtered.map(a => {
+          const cancelPct = a.total ? ((a.ann / a.total) * 100).toFixed(1) : "0.0";
+          return `<tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 font-bold text-kool-navy">${a.am}</td>
+            <td class="px-3 py-2 text-right">${a.restoCount}</td>
+            <td class="px-3 py-2 text-right">${a.liv.toLocaleString("fr-FR")}</td>
+            <td class="px-3 py-2 text-right text-rose-600">${a.ann.toLocaleString("fr-FR")}</td>
+            <td class="px-3 py-2 text-right">${cancelPct} %</td>
+            <td class="px-3 py-2 text-right font-semibold">${a.foodGmv.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            <td class="px-3 py-2 text-right">${a.caResto.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            <td class="px-3 py-2 text-right font-bold text-sky-700">${a.caKool.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            <td class="px-3 py-2 text-right text-amber-700">${a.remises.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          </tr>`;
+        }).join("");
+        return;
+      }
+
+      if (activeTab === "missing") {
+        thead.innerHTML = `<tr>
+          <th class="px-3 py-2.5">Restaurant</th>
+          <th class="px-3 py-2.5">Ville</th>
+          <th class="px-3 py-2.5 text-right">Commandes</th>
+          <th class="px-3 py-2.5 text-right">Food GMV (TND)</th>
+          <th class="px-3 py-2.5">Feuille « Commission »</th>
+          <th class="px-3 py-2.5">Portefeuille AM</th>
+          <th class="px-3 py-2.5 text-right">Annul. sans motif</th>
+          <th class="px-3 py-2.5 text-right">GPS &gt; 50km</th>
+        </tr>`;
+        const filtered = missingRows.filter(m => !query || m.restaurant.toLowerCase().includes(query) || m.city.toLowerCase().includes(query));
+        tbody.innerHTML = filtered.slice(0, 150).map(m => `<tr class="hover:bg-slate-50">
+          <td class="px-3 py-2 font-semibold text-kool-navy">${m.restaurant}</td>
+          <td class="px-3 py-2">${m.city}</td>
+          <td class="px-3 py-2 text-right">${m.cmds.toLocaleString("fr-FR")}</td>
+          <td class="px-3 py-2 text-right font-semibold">${m.foodGmv.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td class="px-3 py-2">${m.missingComm ? '<span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-semibold">Manquante</span>' : '<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">OK</span>'}</td>
+          <td class="px-3 py-2">${m.missingAm ? '<span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold">AM Manquant</span>' : '<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">OK</span>'}</td>
+          <td class="px-3 py-2 text-right">${m.missingReasonCount}</td>
+          <td class="px-3 py-2 text-right">${m.gpsOutliers}</td>
+        </tr>`).join("");
+        return;
+      }
+
+      if (activeTab === "top") {
+        thead.innerHTML = `<tr>
+          <th class="px-3 py-2.5">Rang</th>
+          <th class="px-3 py-2.5">Restaurant</th>
+          <th class="px-3 py-2.5">AM</th>
+          <th class="px-3 py-2.5">Excl.</th>
+          <th class="px-3 py-2.5 text-right">Comm. %</th>
+          <th class="px-3 py-2.5 text-right">Livrées</th>
+          <th class="px-3 py-2.5 text-right">Food GMV (TND)</th>
+          <th class="px-3 py-2.5 text-right">Remises (TND)</th>
+          <th class="px-3 py-2.5 text-right">CA KooL (TND)</th>
+        </tr>`;
+        const filtered = topRestos.filter(r => !query || r.name.toLowerCase().includes(query) || r.am.toLowerCase().includes(query));
+        tbody.innerHTML = filtered.map((r, idx) => `<tr class="hover:bg-slate-50">
+          <td class="px-3 py-2 font-medium text-slate-500">#${idx + 1}</td>
+          <td class="px-3 py-2 font-semibold text-kool-navy">${r.name}</td>
+          <td class="px-3 py-2 text-slate-700">${r.am}</td>
+          <td class="px-3 py-2"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${r.excl === 'OOK' ? 'bg-kool-yellow text-kool-navy' : 'bg-slate-100 text-slate-700'}">${r.excl}</span></td>
+          <td class="px-3 py-2 text-right font-medium">${r.commPct} %</td>
+          <td class="px-3 py-2 text-right">${r.liv.toLocaleString("fr-FR")}</td>
+          <td class="px-3 py-2 text-right font-semibold">${r.foodGmv.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td class="px-3 py-2 text-right text-amber-700">${r.remise.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td class="px-3 py-2 text-right font-semibold text-sky-700">${r.caKool.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        </tr>`).join("");
+        return;
+      }
+
+      const sourceRows = activeTab === "food" ? foodRows : marketRows;
+      thead.innerHTML = `<tr>${PREVIEW_INDICES.map(idx => `<th class="px-3 py-2.5 whitespace-nowrap">${TARGET_HEADERS[idx]}</th>`).join("")}</tr>`;
+
+      const filtered = query
+        ? sourceRows.filter(row => PREVIEW_INDICES.some(idx => String(row[idx]).toLowerCase().includes(query)))
+        : sourceRows;
+
+      const slice = filtered.slice(0, 150);
+      if (slice.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${PREVIEW_INDICES.length}" class="px-4 py-8 text-center text-slate-400">Aucune commande à afficher dans cet onglet.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = slice.map(row => `<tr class="hover:bg-slate-50">${PREVIEW_INDICES.map(idx => {
+        const val = row[idx];
+        if (idx === 41) {
+          const badge = val === "Completed" ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800";
+          return `<td class="px-3 py-2 whitespace-nowrap"><span class="px-2 py-0.5 rounded text-[10px] font-medium ${badge}">${val}</span></td>`;
+        }
+        return `<td class="px-3 py-2 whitespace-nowrap">${val}</td>`;
+      }).join("")}</tr>`).join("");
+    }
+
+    // -----------------------------------------------------------------------
+    // EXPORTS CSV, XLSX & TÉLÉCHARGEMENT INDEX.HTML
+    // -----------------------------------------------------------------------
+    function exportCsv(type) {
+      const rows = type === "food" ? foodRows : marketRows;
+      const filename = type === "food" ? "Kool_Food_VF.csv" : "Kool_Market_VF.csv";
+      const csv = Papa.unparse({ fields: TARGET_HEADERS, data: rows }, { delimiter: ";" });
+      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function exportXlsx() {
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([TARGET_HEADERS, ...foodRows]), "Food VF");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([TARGET_HEADERS, ...marketRows]), "Market VF");
+
+      const amExportRows = amSummaryRows.map(a => [
+        a.am, a.restoCount, a.total, a.liv, a.ann,
+        a.total ? round2((a.ann / a.total) * 100) : 0,
+        round2(a.foodGmv), round2(a.caResto), round2(a.caKool), round2(a.remises)
+      ]);
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
+        ["Account Manager (AM)", "Nb Restaurants", "Commandes Totales", "Livrées", "Annulées", "Taux Annulation (%)", "Food GMV (TND)", "CA Restaurant (TND)", "CA Commission KooL (TND)", "Remises (TND)"],
+        ...amExportRows
+      ]), "Performance AM");
+
+      const missingExportRows = missingRows.map(m => [
+        m.restaurant, m.city, m.cmds, round2(m.foodGmv),
+        m.missingComm ? "OUI" : "OK",
+        m.missingAm ? "OUI" : "OK",
+        m.missingReasonCount, m.gpsOutliers
+      ]);
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
+        ["Restaurant", "Ville", "Commandes", "Food GMV Livré (TND)", "Commission Manquante", "AM Manquant", "Annulations sans motif", "Anomalies GPS (>50km)"],
+        ...missingExportRows
+      ]), "Points Manquants");
+
+      XLSX.writeFile(wb, "KooL_Octobre_Novembre_VF.xlsx");
+    }
+
+    function downloadSelfAsIndexHtml() {
+      const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+      const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "index.html";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    // Vérification de session au démarrage
+    checkSessionOnLoad();
+  </script>
+</body>
+</html>
