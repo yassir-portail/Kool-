@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kool Analytics &amp; Générateur VF (Food VF / Market VF)</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Librairies de traitement CSV, Excel & Graphiques -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            kool: {
+              50: '#fff5f2',
+              100: '#ffe6de',
+              200: '#ffc7b8',
+              300: '#ff9e85',
+              400: '#ff6b47',
+              500: '#f94c1f',
+              600: '#e0360b',
+              700: '#ba2806',
+              800: '#98230a',
+              900: '#7c210e',
+            }
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-kool-500 selection:text-white">
+
+  <!-- Barre supérieure -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-kool-500 to-amber-500 flex items-center justify-center text-white font-extrabold text-xl shadow-md shrink-0">
+          K
+        </div>
+        <div class="truncate">
+          <h1 class="text-base sm:text-lg font-bold text-slate-900 truncate">
+            Kool Ops &amp; Finance Studio
+          </h1>
+          <p class="text-xs text-slate-500 truncate">
+            Générateur 109 colonnes (Food VF &amp; Market VF) &bull; Traitement 100 % local
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <button
+          id="btnLoadDemo"
+          type="button"
+          class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+          title="Charger un jeu d'essai Kool pour tester l'interface"
+        >
+          <svg class="w-4 h-4 text-kool-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Tester avec démo
+        </button>
+
+        <button
+          id="btnDownloadHtml"
+          type="button"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-900 hover:bg-slate-800 text-white shadow-sm transition cursor-pointer"
+          title="Télécharger cette application autonome en fichier index.html"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <span>Télécharger index.html</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Zone de notification Toast -->
+  <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- Contenu principal -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+
+    <!-- Section 1 : Importation & Paramètres -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Zone Dropzone Export Kool -->
+      <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-kool-50 text-kool-600">
+              Étape 1 &bull; Source Kool (33 colonnes)
+            </span>
+            <span id="sourceFileBadge" class="text-xs font-medium text-slate-400">Aucun fichier chargé</span>
+          </div>
+          <h2 class="text-lg font-bold text-slate-900">Importer l'export brut Kool (Orders Extract)</h2>
+          <p class="text-sm text-slate-500 mt-1">
+            Glissez-déposez votre fichier <code class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-xs">.csv</code>,
+            <code class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-xs">.xlsx</code> ou
+            <code class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-xs">.xls</code> (testé jusqu'à +150 000 lignes).
+          </p>
+        </div>
+
+        <label
+          id="dropZoneMain"
+          for="fileInputMain"
+          class="mt-4 flex flex-col items-center justify-center border-2 border-dashed border-slate-300 hover:border-kool-500 hover:bg-kool-50/40 rounded-2xl p-6 sm:p-8 text-center cursor-pointer transition group"
+        >
+          <div class="w-12 h-12 rounded-2xl bg-kool-50 group-hover:bg-kool-100 text-kool-500 flex items-center justify-center mb-3 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+          </div>
+          <p class="text-sm font-semibold text-slate-800">
+            Cliquez pour sélectionner ou glissez votre export Kool ici
+          </p>
+          <p class="text-xs text-slate-400 mt-1">
+            Formats supportés : CSV (UTF-8 / point-virgule / virgule), XLSX, XLS
+          </p>
+          <input id="fileInputMain" type="file" accept=".csv,.xlsx,.xls" class="hidden" />
+        </label>
+
+        <!-- Barre de progression -->
+        <div id="progressWrapper" class="hidden mt-4 space-y-1.5">
+          <div class="flex justify-between text-xs font-medium text-slate-600">
+            <span id="progressLabel">Lecture du fichier...</span>
+            <span id="progressPct">0%</span>
+          </div>
+          <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div id="progressBar" class="h-full bg-gradient-to-r from-kool-500 to-amber-500 rounded-full transition-all duration-200" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Carte Référentiel Commissions & Paramètres -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6 flex flex-col justify-between space-y-4">
+        <div>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700">
+            Étape 2 &bull; Commissions &amp; Règles
+          </span>
+          <h2 class="text-lg font-bold text-slate-900 mt-2">Référentiel « Restaurant par facture »</h2>
+          <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+            Optionnel : importez un fichier 2 colonnes (<span class="font-medium text-slate-700">Nom restaurant</span>, <span class="font-medium text-slate-700">Taux %</span>) pour calculer <code class="text-kool-600">commission ca</code> et <code class="text-kool-600">CA</code>.
+          </p>
+
+          <div class="mt-4 space-y-3">
+            <label
+              for="fileInputRef"
+              class="flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 hover:border-kool-400 bg-slate-50 hover:bg-white cursor-pointer transition"
+            >
+              <div class="flex items-center gap-2 min-w-0">
+                <svg class="w-4 h-4 text-slate-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span id="refFileLabel" class="text-xs font-medium text-slate-700 truncate">Importer grille commissions (.csv/.xlsx)</span>
+              </div>
+              <span class="text-xs font-semibold text-kool-600 shrink-0">Parcourir</span>
+              <input id="fileInputRef" type="file" accept=".csv,.xlsx,.xls" class="hidden" />
+            </label>
+
+            <div>
+              <label for="defaultCommissionInput" class="block text-xs font-semibold text-slate-700 mb-1">
+                Taux de commission par défaut (%) si absent du référentiel
+              </label>
+              <div class="relative">
+                <input
+                  id="defaultCommissionInput"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.5"
+                  value="0"
+                  class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-kool-500 focus:border-kool-500"
+                />
+                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+          <span id="refCountBadge" class="text-xs text-slate-500">0 partenaire dans la grille</span>
+          <button
+            id="btnRecompute"
+            type="button"
+            disabled
+            class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-kool-500 hover:bg-kool-600 disabled:bg-slate-200 disabled:text-slate-400 text-white transition cursor-pointer disabled:cursor-not-allowed"
+          >
+            Recalculer
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2 : Barre d'Exportation Directe -->
+    <section id="exportBanner" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div>
+        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+          Fichiers générés (109 colonnes conformes) prêts au téléchargement
+        </h3>
+        <p id="exportSummaryText" class="text-xs text-slate-500 mt-0.5">
+          Food VF : 0 lignes &bull; Market VF : 0 lignes
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+        <button
+          id="btnExportFoodCsv"
+          type="button"
+          class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-kool-500 hover:bg-kool-600 text-white shadow-sm transition cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Food VF (.csv)
+        </button>
+
+        <button
+          id="btnExportMarketCsv"
+          type="button"
+          class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Market VF (.csv)
+        </button>
+
+        <button
+          id="btnExportXlsx"
+          type="button"
+          class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Classeur complet (.xlsx)
+        </button>
+      </div>
+    </section>
+
+    <!-- Section 3 : Cartes KPI -->
+    <section id="kpiSection" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+        <p class="text-xs font-medium text-slate-500">Commandes Totales</p>
+        <p id="kpiTotalOrders" class="text-xl font-extrabold text-slate-900 mt-1">0</p>
+        <p id="kpiExclusiveSplit" class="text-xs text-slate-400 mt-1">OOK : 0 % &bull; N-E : 0 %</p>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+        <p class="text-xs font-medium text-slate-500">Livrées / Annulées</p>
+        <p id="kpiDeliveredOrders" class="text-xl font-extrabold text-emerald-600 mt-1">0</p>
+        <p id="kpiCancelRate" class="text-xs text-rose-500 font-medium mt-1">Annulées : 0 (0 %)</p>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+        <p class="text-xs font-medium text-slate-500">GMV Livré (Total)</p>
+        <p id="kpiDeliveredGmv" class="text-xl font-extrabold text-slate-900 mt-1">0 TND</p>
+        <p id="kpiAvgBasket" class="text-xs text-slate-400 mt-1">Panier moyen : 0,00 TND</p>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+        <p class="text-xs font-medium text-slate-500">Food GMV (Hors Liv.)</p>
+        <p id="kpiFoodGmv" class="text-xl font-extrabold text-kool-600 mt-1">0 TND</p>
+        <p id="kpiDeliveryFees" class="text-xs text-slate-400 mt-1">Frais liv. : 0 TND</p>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+        <p class="text-xs font-medium text-slate-500">Remises (Coupons)</p>
+        <p id="kpiDiscounts" class="text-xl font-extrabold text-amber-600 mt-1">0 TND</p>
+        <p id="kpiDiscountSplit" class="text-xs text-slate-400 mt-1">Kool : 0 &bull; Resto : 0</p>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+        <p class="text-xs font-medium text-slate-500">CA Commission Kool</p>
+        <p id="kpiKoolCa" class="text-xl font-extrabold text-indigo-600 mt-1">0 TND</p>
+        <p id="kpiMedianTime" class="text-xs text-slate-400 mt-1">Livraison moy. : -- min</p>
+      </div>
+    </section>
+
+    <!-- Section 4 : Graphiques Analytics -->
+    <section id="chartsSection" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900">Évolution Mensuelle (Commandes Livrées)</h3>
+            <p class="text-xs text-slate-500">Food GMV, Frais de livraison et Remises en TND</p>
+          </div>
+          <span class="text-xs font-medium px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600">TND</span>
+        </div>
+        <div class="relative h-72 w-full">
+          <canvas id="monthlyChart"></canvas>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <div class="mb-4">
+          <h3 class="text-sm font-bold text-slate-900">Répartition Géographique</h3>
+          <p class="text-xs text-slate-500">Food GMV livré par ville (Polygone Client)</p>
+        </div>
+        <div class="relative h-72 w-full flex items-center justify-center">
+          <canvas id="cityChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5 : Aperçu des Tables Générées & Top Restaurants -->
+    <section id="tablesSection" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="p-4 sm:p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <!-- Onglets -->
+        <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl self-start">
+          <button
+            type="button"
+            data-tab="food"
+            class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-900 shadow-sm transition cursor-pointer"
+          >
+            Food VF (<span id="tabCountFood">0</span>)
+          </button>
+          <button
+            type="button"
+            data-tab="market"
+            class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition cursor-pointer"
+          >
+            Market VF (<span id="tabCountMarket">0</span>)
+          </button>
+          <button
+            type="button"
+            data-tab="restaurants"
+            class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition cursor-pointer"
+          >
+            Top 25 Restaurants
+          </button>
+        </div>
+
+        <!-- Recherche en direct -->
+        <div class="relative w-full sm:w-72">
+          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            id="searchInput"
+            type="text"
+            placeholder="Filtrer par commande, restaurant, ville..."
+            class="w-full pl-9 pr-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-kool-500 focus:border-kool-500"
+          />
+        </div>
+      </div>
+
+      <!-- Conteneur Tableau -->
+      <div class="overflow-x-auto max-h-[480px]">
+        <table class="min-w-full divide-y divide-slate-200 text-xs">
+          <thead id="previewThead" class="bg-slate-50 sticky top-0 z-10 text-slate-600 font-semibold uppercase tracking-wider"></thead>
+          <tbody id="previewTbody" class="divide-y divide-slate-100 bg-white"></tbody>
+        </table>
+      </div>
+
+      <div class="px-4 py-3 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+        <span id="previewFooterInfo">Affichage des 100 premières lignes correspondantes.</span>
+        <span>Structure complète : 109 colonnes garanties à l'export.</span>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    "use strict";
+
+    // =========================================================================
+    // 1. CONSTANTES & EN-TÊTES CIBLES (109 COLONNES EXACTES)
+    // =========================================================================
+    const TARGET_HEADERS = [
+      "Country", "city", "Area", "Area.1", "région", "commercial", "order day", "Mois", "Shift",
+      "tp d'accep", "tp d'assig", "tp de prepar", "trajet", "tp de liv", "order time", "Accepted",
+      "Accepted Time", "delivered day", "delivered at", "delivery time(M)", "cancelled at",
+      "cancellation time (Mins)", "order id", "Payment Method", "Konnect", "Wallet",
+      "Pblm de paiement", "Transaction ID", "customer Name", "customer Phone", "customer email",
+      "customer address", "Customer second address", "Restaurant ID", "restaurant name", "Chaine",
+      "Perdue", "restaurant phone", "restaurant area", "restaurant address", "services", "status",
+      "Cancelled BY", "driver name", "Driver Type", "driver Phone", "vehicle type", "item total",
+      "driver assigned time", "picked up time", "base de paiement", "Distance travel", "kilo",
+      "à payer réduits", "à payer kilo", "total à payer", "original delivery amount",
+      "delivery amount", "Driver payout HT", "Driver tax", "driver payout", "driver commission",
+      "amount to restaurant", "type de facture", "commission ca", "CA", "item total.1",
+      "Total Food", "chiffre d'affaire restaurant", "Total Food VF", "restaurant commission",
+      "restaurant commission before discount", "Adjustment", "returned Earning", "service charge",
+      "tax", "coupon", "coupon vf", "coupon type", "discount type", "coupon discount",
+      "Total Food.1", "cancellation reason", "cancellation reason VF", "admin earnings",
+      "Kool+ Subscription Fee", "Refunded", "final earnings", "returned", "coupon admin",
+      "coupon restaurant", "Discount Amount", "Discount Type", "Night fare", "Time Taken",
+      "Food Category", "Food Item", "Accepted By", "Assigned By", "Rejection logs", "Bonus Amount",
+      "Total Driver Payout", "Tags", "Discount Type Provider", "Driver Rating", "Restaurant Rating",
+      "Driver Adjustment Amount", "Driver Adjustment Reason", "Driver Adjustment Category"
+    ];
+
+    // Colonnes clés affichées dans l'aperçu web (toutes les 109 sont exportées en CSV/XLSX)
+    const PREVIEW_COL_INDICES = [
+      { idx: 22, label: "Order ID" },
+      { idx: 7,  label: "Mois" },
+      { idx: 1,  label: "Ville" },
+      { idx: 2,  label: "Polygone / Area" },
+      { idx: 34, label: "Restaurant" },
+      { idx: 35, label: "Chaine" },
+      { idx: 41, label: "Statut" },
+      { idx: 13, label: "Tp Livraison" },
+      { idx: 67, label: "Total Food" },
+      { idx: 57, label: "Frais Liv." },
+      { idx: 80, label: "Remise" },
+      { idx: 68, label: "CA Resto" },
+      { idx: 64, label: "Comm. %" },
+      { idx: 65, label: "CA Kool" },
+      { idx: 23, label: "Paiement" }
+    ];
+
+    // État global de l'application
+    const state = {
+      rawRows: [],          // Lignes brutes parsées (objets clé/valeur)
+      commissionMap: {},    // { restaurant_lowercase: rate }
+      foodRows: [],         // Tableaux de 109 valeurs
+      marketRows: [],       // Tableaux de 109 valeurs
+      topRestaurants: [],   // Agrégation Top 25
+      activeTab: "food",
+      searchQuery: "",
+      monthlyChart: null,
+      cityChart: null
+    };
+
+    // =========================================================================
+    // 2. UTILITAIRES DE NETTOYAGE, DATES & CALCULS MÉTIER KOOL
+    // =========================================================================
+    function cleanStr(val) {
+      if (val === null || val === undefined) return "";
+      const s = String(val).trim();
+      return (s === "-" || s === "--") ? "" : s;
+    }
+
+    function parseCleanNumber(val) {
+      if (typeof val === "number") return isNaN(val) ? 0 : val;
+      const s = cleanStr(val).replace(/\s+/g, "").replace(",", ".");
+      const n = parseFloat(s);
+      return isNaN(n) ? 0 : n;
+    }
+
+    function round2(n) {
+      return Math.round((n + Number.EPSILON) * 100) / 100;
+    }
+
+    function formatMoney(n) {
+      return new Intl.NumberFormat("fr-TN", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(Math.round(n)) + " TND";
+    }
+
+    function formatDec(n) {
+      return new Intl.NumberFormat("fr-TN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(n);
+    }
+
+    /**
+     * Parse les dates Kool (ex: "Oct 1, 2026, 12:34:56 PM", ISO, numéro série Excel, ou Date)
+     */
+    function parseKoolDate(val) {
+      if (!val || val === "-" || val === "--") return null;
+      if (val instanceof Date && !isNaN(val.getTime())) return val;
+
+      // Numéro de série Excel
+      if (typeof val === "number" && val > 25569) {
+        const utcDays = Math.floor(val - 25569);
+        const utcValue = utcDays * 86400;
+        const dateInfo = new Date(utcValue * 1000);
+        const fractionalDay = val - Math.floor(val) + 0.0000001;
+        let totalSeconds = Math.floor(86400 * fractionalDay);
+        const seconds = totalSeconds % 60;
+        totalSeconds -= seconds;
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor(totalSeconds / 60) % 60;
+        return new Date(
+          dateInfo.getUTCFullYear(),
+          dateInfo.getUTCMonth(),
+          dateInfo.getUTCDate(),
+          hours,
+          minutes,
+          seconds
+        );
+      }
+
+      const s = String(val).replace(/\u202f/g, " ").trim();
+      const months = {
+        jan: 0, "janv.": 0, feb: 1, "févr.": 1, mar: 2, mars: 2,
+        apr: 3, "avr.": 3, may: 4, mai: 4, jun: 5, juin: 5,
+        jul: 6, "juil.": 6, aug: 7, "août": 7, sep: 8, "sept.": 8,
+        oct: 9, "oct.": 9, nov: 10, "nov.": 10, dec: 11, "déc.": 11
+      };
+
+      const m = s.match(/^([a-zA-Zéû\.]+)\s+(\d{1,2}),\s+(\d{4}),\s+(\d{1,2}):(\d{2}):(\d{2})(?:\s*(AM|PM))?$/i);
+      if (m) {
+        const mon = months[m[1].toLowerCase()];
+        if (mon !== undefined) {
+          let hr = parseInt(m[4], 10);
+          const ampm = (m[7] || "").toUpperCase();
+          if (ampm === "PM" && hr < 12) hr += 12;
+          if (ampm === "AM" && hr === 12) hr = 0;
+          return new Date(parseInt(m[3], 10), mon, parseInt(m[2], 10), hr, parseInt(m[5], 10), parseInt(m[6], 10));
+        }
+      }
+
+      // Format JJ/MM/AAAA HH:MM:SS
+      const fr = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+      if (fr) {
+        return new Date(
+          parseInt(fr[3], 10),
+          parseInt(fr[2], 10) - 1,
+          parseInt(fr[1], 10),
+          parseInt(fr[4] || "0", 10),
+          parseInt(fr[5] || "0", 10),
+          parseInt(fr[6] || "0", 10)
+        );
+      }
+
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    function diffMinutesMidnight(d1, d2) {
+      if (!d1 || !d2) return null;
+      let diffMs = d2.getTime() - d1.getTime();
+      if (diffMs < 0) diffMs += 24 * 3600 * 1000;
+      return diffMs / 60000;
+    }
+
+    function formatDiffHMS(d1, d2) {
+      if (!d1 || !d2) return "";
+      let diffSec = Math.round((d2.getTime() - d1.getTime()) / 1000);
+      if (diffSec < 0) diffSec += 24 * 3600;
+      const h = Math.floor(diffSec / 3600);
+      const m = Math.floor((diffSec % 3600) / 60);
+      const s = diffSec % 60;
+      return [h, m, s].map(v => String(v).padStart(2, "0")).join(":");
+    }
+
+    function formatTimeHMS(d) {
+      if (!d) return "";
+      return [d.getHours(), d.getMinutes(), d.getSeconds()].map(v => String(v).padStart(2, "0")).join(":");
+    }
+
+    function formatOrderDay(d) {
+      if (!d) return "";
+      const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      const mons = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      return `${days[d.getDay()]} ${mons[d.getMonth()]} ${String(d.getDate()).padStart(2, "0")} ${d.getFullYear()}`;
+    }
+
+    function formatMonthYear(d) {
+      if (!d) return "Inconnu";
+      return `${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+    }
+
+    function getShiftLabel(d) {
+      if (!d) return "";
+      const h = d.getHours();
+      if (h >= 6 && h < 16) return "Shift 1 (Matin/Midi)";
+      if (h >= 16 && h <= 23) return "Shift 2 (Soir)";
+      return "Shift 3 (Nuit)";
+    }
+
+    function inferTunisianCity(polygone) {
+      const p = polygone.toLowerCase();
+      if (p.includes("sfax")) return "Sfax";
+      if (p.includes("sousse") || p.includes("akouda") || p.includes("chat meriem")) return "Sousse";
+      return "Grand Tunis";
+    }
+
+    function detectService(restaurant) {
+      const r = restaurant.toLowerCase();
+      if (r.includes("mg market") || r.includes("market")) return "Market";
+      return "Food";
+    }
+
+    // =========================================================================
+    // 3. MOTEUR DE TRANSFORMATION KOOL (33 COLONNES -> 109 COLONNES)
+    // =========================================================================
+    function transformKoolDataset() {
+      if (!state.rawRows || state.rawRows.length === 0) return;
+
+      const defaultComm = parseCleanNumber(document.getElementById("defaultCommissionInput").value);
+      const foodRows = [];
+      const marketRows = [];
+
+      // Agrégateurs Analytics (sur les commandes livrées)
+      let totalOrders = 0;
+      let deliveredOrders = 0;
+      let cancelledOrders = 0;
+      let ookCount = 0;
+      let neCount = 0;
+
+      let deliveredGmv = 0;
+      let deliveredFoodGmv = 0;
+      let deliveredFees = 0;
+      let deliveredDiscounts = 0;
+      let discountKoolSum = 0;
+      let discountRestoSum = 0;
+      let totalKoolCa = 0;
+      let delivMinutesSum = 0;
+      let delivMinutesCount = 0;
+
+      const byMonth = {};
+      const byCity = { "Grand Tunis": 0, "Sfax": 0, "Sousse": 0 };
+      const byResto = {};
+
+      // Normalisation souple des clés d'en-tête pour éviter les espaces invisibles
+      const firstRowKeys = Object.keys(state.rawRows[0]);
+      const keyMap = {};
+      firstRowKeys.forEach(k => {
+        keyMap[k.trim()] = k;
+        keyMap[k.trim().toLowerCase()] = k;
+      });
+      const getVal = (row, colName) => {
+        const realKey = keyMap[colName] || keyMap[colName.toLowerCase()];
+        return realKey ? row[realKey] : "";
+      };
+
+      for (let i = 0; i < state.rawRows.length; i++) {
+        const row = state.rawRows[i];
+        const orderId = cleanStr(getVal(row, "N commande"));
+        if (!orderId) continue;
+
+        totalOrders++;
+
+        const annulee = cleanStr(getVal(row, "Annulée?"));
+        const isCancelled = annulee.toLowerCase() === "oui";
+        if (isCancelled) cancelledOrders++;
+        else deliveredOrders++;
+
+        const lostOrder = cleanStr(getVal(row, "Lost Order"));
+        const cancelReason = cleanStr(getVal(row, "Raison d' annulation"));
+        const clientId = cleanStr(getVal(row, "ID Client"));
+        const restaurant = cleanStr(getVal(row, "Restaurant"));
+        const exclStatus = cleanStr(getVal(row, "Exclusivity Status"));
+        const driver = cleanStr(getVal(row, "Livreur"));
+        const polygone = cleanStr(getVal(row, "Polygone Client"));
+        const superviseur = cleanStr(getVal(row, "Superviseur"));
+        const reassigPar = cleanStr(getVal(row, "réaffecté par"));
+        const couponCode = cleanStr(getVal(row, "Code Coupon"));
+        const chargeDe = cleanStr(getVal(row, "A La Charge De"));
+        const newClient = cleanStr(getVal(row, "New Client"));
+
+        if (exclStatus.toUpperCase() === "OOK") ookCount++;
+        else neCount++;
+
+        let payMethod = cleanStr(getVal(row, "Mode de paiement"));
+        if (payMethod.toLowerCase().startsWith("esp")) payMethod = "Espèce";
+
+        const foodBrut = parseCleanNumber(getVal(row, "Montant Hors Frais De Livraison"));
+        const fraisLiv = parseCleanNumber(getVal(row, "Frais De Livraison"));
+        const remise = parseCleanNumber(getVal(row, "Remise"));
+        const montantTotal = parseCleanNumber(getVal(row, "Montant Total"));
+        const distClient = parseCleanNumber(getVal(row, "Distance Restaurant client"));
+        const prepEstimee = parseCleanNumber(getVal(row, "temps de preparation"));
+
+        const dtCde = parseKoolDate(getVal(row, "Heure Cde") || getVal(row, "date"));
+        const dtAccResto = parseKoolDate(getVal(row, "Heure Acceptation Restaurant"));
+        const dtAssigLiv = parseKoolDate(getVal(row, "Heure Afectation Livreur"));
+        const dtPickup = parseKoolDate(getVal(row, "Heure Prise En Charge Livreur"));
+        const dtLiv = parseKoolDate(getVal(row, "Heure Livraison"));
+
+        const tpAccep = formatDiffHMS(dtCde, dtAccResto);
+        const tpAssig = formatDiffHMS(dtCde, dtAssigLiv);
+        const tpPrepar = formatDiffHMS(dtAccResto, dtPickup);
+        const trajet = formatDiffHMS(dtPickup, dtLiv);
+        const tpLiv = formatDiffHMS(dtCde, dtLiv);
+        const delivMins = (dtCde && dtLiv) ? Math.round(diffMinutesMidnight(dtCde, dtLiv)) : "";
+
+        // Calculs financiers exacts Kool
+        const totalFoodVF = round2(foodBrut);
+        const remiseResto = (chargeDe.toLowerCase() === "restaurant") ? remise : 0;
+        const remiseKool = (chargeDe.toLowerCase() === "kool" || (remise > 0 && remiseResto === 0)) ? remise : 0;
+        const caRestaurant = round2(Math.max(0, foodBrut - remiseResto));
+
+        const rKey = restaurant.toLowerCase();
+        const hasCustomRate = Object.prototype.hasOwnProperty.call(state.commissionMap, rKey);
+        const commissionPct = hasCustomRate ? round2(state.commissionMap[rKey]) : round2(defaultComm);
+        const caKool = round2((commissionPct * caRestaurant) / 100);
+
+        const city = inferTunisianCity(polygone);
+        const serviceLabel = detectService(restaurant);
+        const monthLabel = formatMonthYear(dtCde);
+
+        const outRow = [
+          "Tunisie",                                      // 0: Country
+          city,                                           // 1: city
+          polygone,                                       // 2: Area
+          polygone,                                       // 3: Area.1
+          city,                                           // 4: région
+          superviseur,                                    // 5: commercial
+          formatOrderDay(dtCde),                          // 6: order day
+          monthLabel,                                     // 7: Mois
+          getShiftLabel(dtCde),                           // 8: Shift
+          tpAccep,                                        // 9: tp d'accep
+          tpAssig,                                        // 10: tp d'assig
+          tpPrepar,                                       // 11: tp de prepar
+          trajet,                                         // 12: trajet
+          tpLiv,                                          // 13: tp de liv
+          formatTimeHMS(dtCde),                           // 14: order time
+          dtAccResto ? "Oui" : "Non",                     // 15: Accepted
+          formatTimeHMS(dtAccResto),                      // 16: Accepted Time
+          formatOrderDay(dtLiv),                          // 17: delivered day
+          formatTimeHMS(dtLiv),                           // 18: delivered at
+          delivMins,                                      // 19: delivery time(M)
+          isCancelled ? formatTimeHMS(dtLiv || dtCde) : "", // 20: cancelled at
+          "",                                             // 21: cancellation time (Mins)
+          orderId,                                        // 22: order id
+          payMethod,                                      // 23: Payment Method
+          payMethod === "Clictopay" ? montantTotal : 0,   // 24: Konnect
+          0,                                              // 25: Wallet
+          "",                                             // 26: Pblm de paiement
+          "",                                             // 27: Transaction ID
+          clientId,                                       // 28: customer Name
+          "",                                             // 29: customer Phone
+          "",                                             // 30: customer email
+          polygone,                                       // 31: customer address
+          "",                                             // 32: Customer second address
+          "",                                             // 33: Restaurant ID
+          restaurant,                                     // 34: restaurant name
+          exclStatus,                                     // 35: Chaine
+          lostOrder,                                      // 36: Perdue
+          "",                                             // 37: restaurant phone
+          polygone,                                       // 38: restaurant area
+          "",                                             // 39: restaurant address
+          serviceLabel,                                   // 40: services
+          isCancelled ? "Cancelled" : "Completed",        // 41: status
+          isCancelled ? chargeDe : "",                    // 42: Cancelled BY
+          driver,                                         // 43: driver name
+          "",                                             // 44: Driver Type
+          "",                                             // 45: driver Phone
+          "",                                             // 46: vehicle type
+          round2(foodBrut),                               // 47: item total
+          formatTimeHMS(dtAssigLiv),                      // 48: driver assigned time
+          formatTimeHMS(dtPickup),                        // 49: picked up time
+          "",                                             // 50: base de paiement
+          round2(distClient),                             // 51: Distance travel
+          round2(distClient),                             // 52: kilo
+          0,                                              // 53: à payer réduits
+          0,                                              // 54: à payer kilo
+          0,                                              // 55: total à payer
+          round2(fraisLiv),                               // 56: original delivery amount
+          round2(fraisLiv),                               // 57: delivery amount
+          0,                                              // 58: Driver payout HT
+          0,                                              // 59: Driver tax
+          0,                                              // 60: driver payout
+          0,                                              // 61: driver commission
+          round2(caRestaurant - caKool),                  // 62: amount to restaurant
+          hasCustomRate ? "Par facture" : "Standard",     // 63: type de facture
+          commissionPct,                                  // 64: commission ca
+          caKool,                                         // 65: CA
+          round2(foodBrut),                               // 66: item total.1
+          round2(foodBrut),                               // 67: Total Food
+          caRestaurant,                                   // 68: chiffre d'affaire restaurant
+          totalFoodVF,                                    // 69: Total Food VF
+          caKool,                                         // 70: restaurant commission
+          caKool,                                         // 71: restaurant commission before discount
+          0,                                              // 72: Adjustment
+          0,                                              // 73: returned Earning
+          0,                                              // 74: service charge
+          0,                                              // 75: tax
+          couponCode,                                     // 76: coupon
+          couponCode,                                     // 77: coupon vf
+          couponCode ? "Promo" : "",                      // 78: coupon type
+          remise > 0 ? "Discount" : "",                   // 79: discount type
+          round2(remise),                                 // 80: coupon discount
+          round2(foodBrut),                               // 81: Total Food.1
+          cancelReason,                                   // 82: cancellation reason
+          cancelReason,                                   // 83: cancellation reason VF
+          caKool,                                         // 84: admin earnings
+          0,                                              // 85: Kool+ Subscription Fee
+          0,                                              // 86: Refunded
+          caKool,                                         // 87: final earnings
+          0,                                              // 88: returned
+          round2(remiseKool),                             // 89: coupon admin
+          round2(remiseResto),                            // 90: coupon restaurant
+          round2(remise),                                 // 91: Discount Amount
+          remise > 0 ? "Coupon" : "",                     // 92: Discount Type
+          0,                                              // 93: Night fare
+          prepEstimee,                                    // 94: Time Taken
+          "",                                             // 95: Food Category
+          "",                                             // 96: Food Item
+          superviseur,                                    // 97: Accepted By
+          reassigPar,                                     // 98: Assigned By
+          "",                                             // 99: Rejection logs
+          0,                                              // 100: Bonus Amount
+          0,                                              // 101: Total Driver Payout
+          newClient === "1" ? "New Client" : "",          // 102: Tags
+          chargeDe,                                       // 103: Discount Type Provider
+          "",                                             // 104: Driver Rating
+          "",                                             // 105: Restaurant Rating
+          0,                                              // 106: Driver Adjustment Amount
+          "",                                             // 107: Driver Adjustment Reason
+          ""                                              // 108: Driver Adjustment Category
+        ];
+
+        // Double filtrage inclusif : Market VF vs Food VF
+        const sLow = serviceLabel.toLowerCase();
+        const rLow = restaurant.toLowerCase();
+        if (sLow.includes("mg market") || sLow.includes("market") ||
+            rLow.includes("mg market") || rLow.includes("market")) {
+          marketRows.push(outRow);
+        } else {
+          foodRows.push(outRow);
+        }
+
+        // Mise à jour des métriques Analytics
+        if (!byResto[restaurant]) {
+          byResto[restaurant] = {
+            name: restaurant || "Non renseigné",
+            city,
+            excl: exclStatus || "-",
+            total: 0,
+            delivered: 0,
+            cancelled: 0,
+            foodGmv: 0,
+            discounts: 0,
+            caResto: 0,
+            caKool: 0
+          };
+        }
+        byResto[restaurant].total++;
+
+        if (!isCancelled) {
+          deliveredGmv += montantTotal;
+          deliveredFoodGmv += foodBrut;
+          deliveredFees += fraisLiv;
+          deliveredDiscounts += remise;
+          discountKoolSum += remiseKool;
+          discountRestoSum += remiseResto;
+          totalKoolCa += caKool;
+
+          if (typeof delivMins === "number" && delivMins > 0 && delivMins < 300) {
+            delivMinutesSum += delivMins;
+            delivMinutesCount++;
+          }
+
+          if (!byMonth[monthLabel]) {
+            byMonth[monthLabel] = { foodGmv: 0, fees: 0, discounts: 0 };
+          }
+          byMonth[monthLabel].foodGmv += foodBrut;
+          byMonth[monthLabel].fees += fraisLiv;
+          byMonth[monthLabel].discounts += remise;
+
+          byCity[city] = (byCity[city] || 0) + foodBrut;
+
+          byResto[restaurant].delivered++;
+          byResto[restaurant].foodGmv += foodBrut;
+          byResto[restaurant].discounts += remise;
+          byResto[restaurant].caResto += caRestaurant;
+          byResto[restaurant].caKool += caKool;
+        } else {
+          byResto[restaurant].cancelled++;
+        }
+      }
+
+      state.foodRows = foodRows;
+      state.marketRows = marketRows;
+      state.topRestaurants = Object.values(byResto)
+        .sort((a, b) => b.foodGmv - a.foodGmv)
+        .slice(0, 25);
+
+      // Affichage des sections UI
+      document.getElementById("exportBanner").classList.remove("hidden");
+      document.getElementById("kpiSection").classList.remove("hidden");
+      document.getElementById("chartsSection").classList.remove("hidden");
+      document.getElementById("tablesSection").classList.remove("hidden");
+      document.getElementById("btnRecompute").disabled = false;
+
+      document.getElementById("exportSummaryText").textContent =
+        `Food VF : ${foodRows.length.toLocaleString("fr-FR")} lignes • Market VF : ${marketRows.length.toLocaleString("fr-FR")} lignes • Total : ${(foodRows.length + marketRows.length).toLocaleString("fr-FR")} lignes`;
+
+      document.getElementById("tabCountFood").textContent = foodRows.length.toLocaleString("fr-FR");
+      document.getElementById("tabCountMarket").textContent = marketRows.length.toLocaleString("fr-FR");
+
+      // Mise à jour KPI
+      const ookPct = totalOrders ? ((ookCount / totalOrders) * 100).toFixed(1) : "0.0";
+      const nePct = totalOrders ? ((neCount / totalOrders) * 100).toFixed(1) : "0.0";
+      const cancelPct = totalOrders ? ((cancelledOrders / totalOrders) * 100).toFixed(1) : "0.0";
+      const avgBasket = deliveredOrders ? (deliveredGmv / deliveredOrders) : 0;
+      const avgTime = delivMinutesCount ? (delivMinutesSum / delivMinutesCount).toFixed(1) : "--";
+
+      document.getElementById("kpiTotalOrders").textContent = totalOrders.toLocaleString("fr-FR");
+      document.getElementById("kpiExclusiveSplit").textContent = `OOK : ${ookPct} % • N-E : ${nePct} %`;
+
+      document.getElementById("kpiDeliveredOrders").textContent = deliveredOrders.toLocaleString("fr-FR");
+      document.getElementById("kpiCancelRate").textContent = `Annulées : ${cancelledOrders.toLocaleString("fr-FR")} (${cancelPct} %)`;
+
+      document.getElementById("kpiDeliveredGmv").textContent = formatMoney(deliveredGmv);
+      document.getElementById("kpiAvgBasket").textContent = `Panier moyen : ${formatDec(avgBasket)} TND`;
+
+      document.getElementById("kpiFoodGmv").textContent = formatMoney(deliveredFoodGmv);
+      document.getElementById("kpiDeliveryFees").textContent = `Frais liv. : ${formatMoney(deliveredFees)}`;
+
+      document.getElementById("kpiDiscounts").textContent = formatMoney(deliveredDiscounts);
+      document.getElementById("kpiDiscountSplit").textContent = `Kool : ${formatMoney(discountKoolSum)} • Resto : ${formatMoney(discountRestoSum)}`;
+
+      document.getElementById("kpiKoolCa").textContent = formatMoney(totalKoolCa);
+      document.getElementById("kpiMedianTime").textContent = `Livraison moy. : ${avgTime} min`;
+
+      renderCharts(byMonth, byCity);
+      renderPreviewTable();
+    }
+
+    // =========================================================================
+    // 4. GRAPHIQUES CHART.JS
+    // =========================================================================
+    function renderCharts(byMonth, byCity) {
+      const sortedMonths = Object.keys(byMonth).sort((a, b) => {
+        const [ma, ya] = a.split("/").map(Number);
+        const [mb, yb] = b.split("/").map(Number);
+        return (ya - yb) || (ma - mb);
+      });
+
+      const ctxMonthly = document.getElementById("monthlyChart").getContext("2d");
+      if (state.monthlyChart) state.monthlyChart.destroy();
+      state.monthlyChart = new Chart(ctxMonthly, {
+        type: "bar",
+        data: {
+          labels: sortedMonths,
+          datasets: [
+            {
+              label: "Food GMV Livré (TND)",
+              data: sortedMonths.map(m => round2(byMonth[m].foodGmv)),
+              backgroundColor: "#f94c1f",
+              borderRadius: 6
+            },
+            {
+              label: "Remises / Coupons (TND)",
+              data: sortedMonths.map(m => round2(byMonth[m].discounts)),
+              backgroundColor: "#f59e0b",
+              borderRadius: 6
+            },
+            {
+              label: "Frais de Livraison (TND)",
+              data: sortedMonths.map(m => round2(byMonth[m].fees)),
+              backgroundColor: "#0ea5e9",
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: "bottom", labels: { usePointStyle: true, font: { family: "Inter", size: 11 } } }
+          },
+          scales: {
+            y: { beginAtZero: true, grid: { color: "#f1f5f9" } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+
+      const cityLabels = Object.keys(byCity).filter(c => byCity[c] > 0);
+      const ctxCity = document.getElementById("cityChart").getContext("2d");
+      if (state.cityChart) state.cityChart.destroy();
+      state.cityChart = new Chart(ctxCity, {
+        type: "doughnut",
+        data: {
+          labels: cityLabels,
+          datasets: [{
+            data: cityLabels.map(c => round2(byCity[c])),
+            backgroundColor: ["#f94c1f", "#f59e0b", "#10b981", "#6366f1"],
+            borderWidth: 2,
+            borderColor: "#ffffff"
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: "62%",
+          plugins: {
+            legend: { position: "bottom", labels: { usePointStyle: true, font: { family: "Inter", size: 11 } } }
+          }
+        }
+      });
+    }
+
+    // =========================================================================
+    // 5. TABLEAU D'APERÇU INTERACTIF
+    // =========================================================================
+    function renderPreviewTable() {
+      const thead = document.getElementById("previewThead");
+      const tbody = document.getElementById("previewTbody");
+      const footer = document.getElementById("previewFooterInfo");
+      const q = state.searchQuery.trim().toLowerCase();
+
+      if (state.activeTab === "restaurants") {
+        thead.innerHTML = `
+          <tr>
+            <th class="px-4 py-3 text-left">#</th>
+            <th class="px-4 py-3 text-left">Restaurant</th>
+            <th class="px-4 py-3 text-left">Ville</th>
+            <th class="px-4 py-3 text-left">Excl.</th>
+            <th class="px-4 py-3 text-right">Livrées</th>
+            <th class="px-4 py-3 text-right">Tx Annul.</th>
+            <th class="px-4 py-3 text-right">Food GMV</th>
+            <th class="px-4 py-3 text-right">Remises</th>
+            <th class="px-4 py-3 text-right">CA Resto</th>
+            <th class="px-4 py-3 text-right">CA Kool</th>
+          </tr>
+        `;
+
+        const filtered = state.topRestaurants.filter(r =>
+          !q || r.name.toLowerCase().includes(q) || r.city.toLowerCase().includes(q)
+        );
+
+        tbody.innerHTML = filtered.map((r, idx) => {
+          const cancelRate = r.total ? ((r.cancelled / r.total) * 100).toFixed(1) : "0.0";
+          return `
+            <tr class="hover:bg-slate-50 transition">
+              <td class="px-4 py-2.5 font-semibold text-slate-400">${idx + 1}</td>
+              <td class="px-4 py-2.5 font-semibold text-slate-900">${escapeHtml(r.name)}</td>
+              <td class="px-4 py-2.5 text-slate-600">${escapeHtml(r.city)}</td>
+              <td class="px-4 py-2.5">
+                <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold ${r.excl === "OOK" ? "bg-kool-50 text-kool-600" : "bg-slate-100 text-slate-600"}">
+                  ${escapeHtml(r.excl)}
+                </span>
+              </td>
+              <td class="px-4 py-2.5 text-right font-medium">${r.delivered.toLocaleString("fr-FR")}</td>
+              <td class="px-4 py-2.5 text-right text-rose-600 font-medium">${cancelRate} %</td>
+              <td class="px-4 py-2.5 text-right font-semibold text-slate-900">${formatDec(r.foodGmv)}</td>
+              <td class="px-4 py-2.5 text-right text-amber-600">${formatDec(r.discounts)}</td>
+              <td class="px-4 py-2.5 text-right font-medium text-slate-800">${formatDec(r.caResto)}</td>
+              <td class="px-4 py-2.5 text-right font-bold text-indigo-600">${formatDec(r.caKool)}</td>
+            </tr>
+          `;
+        }).join("");
+
+        footer.textContent = `Top ${filtered.length} restaurants classés par Food GMV livré.`;
+        return;
+      }
+
+      // Onglet Food VF ou Market VF
+      const dataset = state.activeTab === "market" ? state.marketRows : state.foodRows;
+
+      thead.innerHTML = `<tr>${PREVIEW_COL_INDICES.map(c =>
+        `<th class="px-3.5 py-3 text-left whitespace-nowrap">${c.label}</th>`
+      ).join("")}</tr>`;
+
+      const filtered = [];
+      for (let i = 0; i < dataset.length; i++) {
+        const row = dataset[i];
+        if (!q ||
+          String(row[22]).toLowerCase().includes(q) ||
+          String(row[34]).toLowerCase().includes(q) ||
+          String(row[1]).toLowerCase().includes(q) ||
+          String(row[2]).toLowerCase().includes(q)
+        ) {
+          filtered.push(row);
+          if (filtered.length >= 100) break;
+        }
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="${PREVIEW_COL_INDICES.length}" class="px-4 py-8 text-center text-slate-400">
+              Aucune commande dans cet onglet (${state.activeTab === "market" ? "Market VF" : "Food VF"}).
+            </td>
+          </tr>
+        `;
+      } else {
+        tbody.innerHTML = filtered.map(row => {
+          return `<tr class="hover:bg-slate-50 transition">${PREVIEW_COL_INDICES.map(c => {
+            const val = row[c.idx];
+            if (c.idx === 41) {
+              const ok = val === "Completed";
+              return `<td class="px-3.5 py-2 whitespace-nowrap"><span class="px-2 py-0.5 rounded-md text-[11px] font-semibold ${ok ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}">${val}</span></td>`;
+            }
+            return `<td class="px-3.5 py-2 whitespace-nowrap text-slate-700">${escapeHtml(String(val ?? ""))}</td>`;
+          }).join("")}</tr>`;
+        }).join("");
+      }
+
+      footer.textContent = `Aperçu limité à ${filtered.length} lignes sur ${dataset.length.toLocaleString("fr-FR")} au total.`;
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    // =========================================================================
+    // 6. LECTURE DES FICHIERS (CSV & EXCEL) + EXPORTATIONS DIRECTES
+    // =========================================================================
+    function showProgress(pct, label) {
+      const wrap = document.getElementById("progressWrapper");
+      wrap.classList.remove("hidden");
+      document.getElementById("progressBar").style.width = `${pct}%`;
+      document.getElementById("progressPct").textContent = `${pct}%`;
+      document.getElementById("progressLabel").textContent = label;
+    }
+
+    function hideProgress() {
+      setTimeout(() => {
+        document.getElementById("progressWrapper").classList.add("hidden");
+      }, 600);
+    }
+
+    function showToast(message, type = "success") {
+      const container = document.getElementById("toastContainer");
+      const el = document.createElement("div");
+      const bg = type === "error" ? "bg-rose-600" : "bg-slate-900";
+      el.className = `${bg} text-white text-xs font-medium px-4 py-3 rounded-xl shadow-lg pointer-events-auto transition-opacity duration-300`;
+      el.textContent = message;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = "0";
+        setTimeout(() => el.remove(), 300);
+      }, 3500);
+    }
+
+    function handleMainFile(file) {
+      if (!file) return;
+      document.getElementById("sourceFileBadge").textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} Mo)`;
+      showProgress(15, "Lecture du fichier source...");
+
+      const ext = file.name.split(".").pop().toLowerCase();
+      if (ext === "csv") {
+        Papa.parse(file, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (results) => {
+            showProgress(70, "Application des règles métier Kool...");
+            setTimeout(() => {
+              state.rawRows = results.data || [];
+              transformKoolDataset();
+              showProgress(100, "Terminé !");
+              hideProgress();
+              showToast(`${state.rawRows.length.toLocaleString("fr-FR")} lignes Kool transformées avec succès.`);
+            }, 30);
+          },
+          error: (err) => {
+            hideProgress();
+            showToast("Erreur de lecture CSV : " + err.message, "error");
+          }
+        });
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            showProgress(50, "Décodage du classeur Excel...");
+            const data = new Uint8Array(e.target.result);
+            const wb = XLSX.read(data, { type: "array" });
+            const firstSheet = wb.Sheets[wb.SheetNames[0]];
+            const jsonRows = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
+            showProgress(80, "Application des règles métier Kool...");
+            setTimeout(() => {
+              state.rawRows = jsonRows;
+              transformKoolDataset();
+              showProgress(100, "Terminé !");
+              hideProgress();
+              showToast(`${state.rawRows.length.toLocaleString("fr-FR")} lignes Excel transformées avec succès.`);
+            }, 30);
+          } catch (err) {
+            hideProgress();
+            showToast("Erreur de lecture Excel : " + err.message, "error");
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      }
+    }
+
+    function handleReferenceFile(file) {
+      if (!file) return;
+      const ext = file.name.split(".").pop().toLowerCase();
+      const applyRefRows = (rows2D) => {
+        const map = {};
+        let count = 0;
+        for (let i = 1; i < rows2D.length; i++) {
+          const rName = cleanStr(rows2D[i][0]).toLowerCase();
+          const rate = parseCleanNumber(rows2D[i][1]);
+          if (rName) {
+            map[rName] = rate;
+            count++;
+          }
+        }
+        state.commissionMap = map;
+        document.getElementById("refFileLabel").textContent = file.name;
+        document.getElementById("refCountBadge").textContent = `${count} partenaires chargés`;
+        showToast(`Grille de commissions chargée (${count} partenaires).`);
+        if (state.rawRows.length > 0) transformKoolDataset();
+      };
+
+      if (ext === "csv") {
+        Papa.parse(file, {
+          header: false,
+          skipEmptyLines: true,
+          complete: (res) => applyRefRows(res.data || [])
+        });
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const wb = XLSX.read(new Uint8Array(e.target.result), { type: "array" });
+          const rows2D = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+          applyRefRows(rows2D);
+        };
+        reader.readAsArrayBuffer(file);
+      }
+    }
+
+    function triggerDownloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function exportCsvFile(rows, filename) {
+      const csvContent = Papa.unparse({
+        fields: TARGET_HEADERS,
+        data: rows
+      }, { delimiter: ";" });
+      // Ajout du BOM UTF-8 pour ouverture directe propre sous Excel
+      const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+      triggerDownloadBlob(blob, filename);
+      showToast(`Export ${filename} téléchargé (${rows.length} lignes).`);
+    }
+
+    function exportCompleteWorkbook() {
+      const wb = XLSX.utils.book_new();
+      const wsFood = XLSX.utils.aoa_to_sheet([TARGET_HEADERS, ...state.foodRows]);
+      const wsMarket = XLSX.utils.aoa_to_sheet([TARGET_HEADERS, ...state.marketRows]);
+      XLSX.utils.book_append_sheet(wb, wsFood, "Food VF");
+      XLSX.utils.book_append_sheet(wb, wsMarket, "Market VF");
+      const wbOut = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      const blob = new Blob([wbOut], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      triggerDownloadBlob(blob, "Kool_FoodVF_MarketVF_Export.xlsx");
+      showToast("Classeur complet Excel (.xlsx) téléchargé.");
+    }
+
+    function downloadSelfHtml() {
+      const htmlSource = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+      const blob = new Blob([htmlSource], { type: "text/html;charset=utf-8" });
+      triggerDownloadBlob(blob, "index.html");
+      showToast("Fichier autonome index.html téléchargé.");
+    }
+
+    // Jeu de données de démonstration réaliste Kool
+    function loadDemoData() {
+      document.getElementById("sourceFileBadge").textContent = "Demo_Kool_Oct_Nov_2026.csv";
+      state.rawRows = [
+        {
+          "Annulée?": "Non", "Lost Order": "0", "Raison d' annulation": "-", "date": "2026-10-14",
+          "N commande": "KL-904812", "ID Client": "USR-11024", "Restaurant": "Baguette & Baguette Lac 2",
+          "Exclusivity Status": "OOK", "Livreur": "Sami Ben Ali", "Montant Hors Frais De Livraison": "34.50",
+          "Frais De Livraison": "3.00", "Remise": "10.00", "Montant Total": "37.50",
+          "Mode de paiement": "espèces", "Code Coupon": "HIKOOL50",
+          "Heure Cde": "Oct 14, 2026, 12:15:10 PM", "Heure Acceptation Restaurant": "Oct 14, 2026, 12:16:45 PM",
+          "Heure Prete": "Oct 14, 2026, 12:31:00 PM", "Heure Afectation Livreur": "Oct 14, 2026, 12:18:20 PM",
+          "Heure Acceptation Livreur": "Oct 14, 2026, 12:18:50 PM", "Heure Prise En Charge Livreur": "Oct 14, 2026, 12:33:15 PM",
+          "Heure Livraison": "Oct 14, 2026, 12:49:40 PM", "Distance Restaurant client": "3.2",
+          "temps de preparation": "15", "Superviseur": "Amine T.", "Polygone Client": "Les Berges du Lac 2",
+          "réaffecté par": "-", "A La Charge De": "Kool", "New Client": "1"
+        },
+        {
+          "Annulée?": "Non", "Lost Order": "0", "Raison d' annulation": "-", "date": "2026-11-08",
+          "N commande": "KL-982341", "ID Client": "USR-44910", "Restaurant": "Pizza Hut Sfax Centre",
+          "Exclusivity Status": "N-E", "Livreur": "Mahdi Karray", "Montant Hors Frais De Livraison": "28.00",
+          "Frais De Livraison": "0.00", "Remise": "14.00", "Montant Total": "28.00",
+          "Mode de paiement": "Clictopay", "Code Coupon": "ULTRAKOOL",
+          "Heure Cde": "Nov 8, 2026, 8:05:00 PM", "Heure Acceptation Restaurant": "Nov 8, 2026, 8:07:12 PM",
+          "Heure Prete": "Nov 8, 2026, 8:25:00 PM", "Heure Afectation Livreur": "Nov 8, 2026, 8:08:30 PM",
+          "Heure Acceptation Livreur": "Nov 8, 2026, 8:09:00 PM", "Heure Prise En Charge Livreur": "Nov 8, 2026, 8:27:10 PM",
+          "Heure Livraison": "Nov 8, 2026, 8:42:05 PM", "Distance Restaurant client": "2.4",
+          "temps de preparation": "18", "Superviseur": "Rania M.", "Polygone Client": "Sfax Ville",
+          "réaffecté par": "-", "A La Charge De": "Restaurant", "New Client": "0"
+        },
+        {
+          "Annulée?": "Non", "Lost Order": "0", "Raison d' annulation": "-", "date": "2026-11-15",
+          "N commande": "KL-991045", "ID Client": "USR-77211", "Restaurant": "MG Market Menzah 6",
+          "Exclusivity Status": "OOK", "Livreur": "Youssef Gharbi", "Montant Hors Frais De Livraison": "64.20",
+          "Frais De Livraison": "3.50", "Remise": "0.00", "Montant Total": "67.70",
+          "Mode de paiement": "espèces", "Code Coupon": "-",
+          "Heure Cde": "Nov 15, 2026, 5:40:00 PM", "Heure Acceptation Restaurant": "Nov 15, 2026, 5:41:20 PM",
+          "Heure Prete": "Nov 15, 2026, 5:54:00 PM", "Heure Afectation Livreur": "Nov 15, 2026, 5:43:00 PM",
+          "Heure Acceptation Livreur": "Nov 15, 2026, 5:43:30 PM", "Heure Prise En Charge Livreur": "Nov 15, 2026, 5:56:10 PM",
+          "Heure Livraison": "Nov 15, 2026, 6:11:45 PM", "Distance Restaurant client": "1.9",
+          "temps de preparation": "12", "Superviseur": "Amine T.", "Polygone Client": "El Menzah 6",
+          "réaffecté par": "-", "A La Charge De": "-", "New Client": "0"
+        },
+        {
+          "Annulée?": "Oui", "Lost Order": "1", "Raison d' annulation": "First inj", "date": "2026-11-19",
+          "N commande": "KL-998712", "ID Client": "USR-55109", "Restaurant": "Plan B Sousse Kantaoui",
+          "Exclusivity Status": "N-E", "Livreur": "-", "Montant Hors Frais De Livraison": "22.50",
+          "Frais De Livraison": "2.50", "Remise": "5.00", "Montant Total": "25.00",
+          "Mode de paiement": "espèces", "Code Coupon": "KOOL5",
+          "Heure Cde": "Nov 19, 2026, 9:12:00 PM", "Heure Acceptation Restaurant": "-",
+          "Heure Prete": "-", "Heure Afectation Livreur": "-",
+          "Heure Acceptation Livreur": "-", "Heure Prise En Charge Livreur": "-",
+          "Heure Livraison": "-", "Distance Restaurant client": "4.1",
+          "temps de preparation": "15", "Superviseur": "Rania M.", "Polygone Client": "Sousse Kantaoui",
+          "réaffecté par": "-", "A La Charge De": "Kool", "New Client": "0"
+        }
+      ];
+      transformKoolDataset();
+      showToast("Jeu de démonstration Kool chargé (Food VF + Market VF).");
+    }
+
+    // =========================================================================
+    // 7. INITIALISATION DES ÉCOUTEURS D'ÉVÉNEMENTS
+    // =========================================================================
+    document.addEventListener("DOMContentLoaded", () => {
+      const dropZone = document.getElementById("dropZoneMain");
+      const fileInputMain = document.getElementById("fileInputMain");
+      const fileInputRef = document.getElementById("fileInputRef");
+
+      // Drag & Drop
+      ["dragenter", "dragover"].forEach(evt => {
+        dropZone.addEventListener(evt, (e) => {
+          e.preventDefault();
+          dropZone.classList.add("border-kool-500", "bg-kool-50/60");
+        });
+      });
+
+      ["dragleave", "drop"].forEach(evt => {
+        dropZone.addEventListener(evt, (e) => {
+          e.preventDefault();
+          dropZone.classList.remove("border-kool-500", "bg-kool-50/60");
+        });
+      });
+
+      dropZone.addEventListener("drop", (e) => {
+        const file = e.dataTransfer?.files?.[0];
+        if (file) handleMainFile(file);
+      });
+
+      fileInputMain.addEventListener("change", (e) => {
+        const file = e.target.files?.[0];
+        if (file) handleMainFile(file);
+      });
+
+      fileInputRef.addEventListener("change", (e) => {
+        const file = e.target.files?.[0];
+        if (file) handleReferenceFile(file);
+      });
+
+      document.getElementById("btnRecompute").addEventListener("click", () => {
+        transformKoolDataset();
+        showToast("Recalcul terminé avec les nouveaux paramètres.");
+      });
+
+      document.getElementById("btnLoadDemo").addEventListener("click", loadDemoData);
+      document.getElementById("btnDownloadHtml").addEventListener("click", downloadSelfHtml);
+
+      document.getElementById("btnExportFoodCsv").addEventListener("click", () => {
+        exportCsvFile(state.foodRows, "Kool_Food_VF.csv");
+      });
+
+      document.getElementById("btnExportMarketCsv").addEventListener("click", () => {
+        exportCsvFile(state.marketRows, "Kool_Market_VF.csv");
+      });
+
+      document.getElementById("btnExportXlsx").addEventListener("click", exportCompleteWorkbook);
+
+      // Onglets Aperçu
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".tab-btn").forEach(b => {
+            b.classList.remove("bg-white", "text-slate-900", "shadow-sm");
+            b.classList.add("text-slate-600");
+          });
+          btn.classList.add("bg-white", "text-slate-900", "shadow-sm");
+          btn.classList.remove("text-slate-600");
+          state.activeTab = btn.dataset.tab;
+          renderPreviewTable();
+        });
+      });
+
+      // Recherche en direct
+      document.getElementById("searchInput").addEventListener("input", (e) => {
+        state.searchQuery = e.target.value;
+        renderPreviewTable();
+      });
+    });
+  </script>
+</body>
+</html>
